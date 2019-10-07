@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8'>
+	<meta name="viewport" content="width=device-width,height=device-height, user-scalable=no"/>
+	<title>Leaflet.Editable demo</title>
+	<link rel="stylesheet" href="https://npmcdn.com/leaflet@1.3.4/dist/leaflet.css"/>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/@turf/turf@5/turf.min.js"></script>
+	<script src="https://npmcdn.com/leaflet@1.3.4/dist/leaflet.js"></script>
+	<script src="https://npmcdn.com/leaflet.path.drag/src/Path.Drag.js"></script>
+	<script src="../lib/Leaflet.Editable.js"></script>
+
+	<style type='text/css'>
+		body { margin: 0; padding: 0; }
+
+		/*#map { position: absolute; top: 0; bottom: 0; right: 0; left: 0; width: 100%; }*/
+	</style>
+</head>
+<body>
+<form class="form-inline">
+	<button type="button" class="form-control" onclick="subDivide()">Subdivide plots</button>
+</form>
+<div id="map_controls" style="width: 980px"></div>
+<div id="map" style="width: 980px; height: 600px"></div>
+
+<script type="text/javascript">
+	var startPoint = [42.464292, -76.451431];
+	// var map = L.map('map', {editable: true}).setView(startPoint, 16),
+	// 	tilelayer = L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {maxZoom: 20, attribution: 'Data \u00a9 <a href="http://www.openstreetmap.org/copyright"> OpenStreetMap Contributors </a> Tiles \u00a9 HOT'}).addTo(map);
+
+	// Set up Leaflet Map
+	var map = L.map('map', {editable: true}).setView(startPoint, 16);
+
+	// Add Map Layer
+	var tilelayer = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false', {
+		attribution: '&copy; <a href="http://www.esri.com/">Esri</a>, DigitalGlobe, GeoEye, i-cubed, USDA FSA, USGS, AEX, Getmapping, Aerogrid, IGN, IGP, swisstopo, and the GIS User Community',
+		maxZoom: 28,
+		maxNativeZoom: 19
+	}).addTo(this.map);
+
+	L.EditControl = L.Control.extend({
+
+		options: {
+			position: 'topleft',
+			callback: null,
+			kind: '',
+			html: ''
+		},
+
+		onAdd: function (map) {
+			var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
+				link = L.DomUtil.create('a', '', container);
+
+			link.href = '#';
+			link.title = 'Create a new ' + this.options.kind;
+			link.innerHTML = this.options.html;
+			L.DomEvent.on(link, 'click', L.DomEvent.stop)
+				.on(link, 'click', function () {
+					window.LAYER = this.options.callback.call(map.editTools);
+				}, this);
+
+			return container;
+		}
+
+	});
+
+	// L.NewLineControl = L.EditControl.extend({
+	//
+	// 	options: {
+	// 		position: 'topleft',
+	// 		callback: map.editTools.startPolyline,
+	// 		kind: 'line',
+	// 		html: '\\/\\'
+	// 	}
+	//
+	// });
+
+	var polygon = L.polygon([
+		[
+			[42.467048, -76.457162],
+			[42.464895, -76.457055],
+			[42.464974, -76.449394],
+			[42.463771, -76.44933],
+			[42.463866, -76.445789],
+			[42.467317, -76.448407],
+			[42.467317, -76.44918],
+			[42.467048, -76.457162]
+		]
+	]);
+	polygon.addTo(map).enableEdit();
+
+	L.NewPolygonControl = L.EditControl.extend({
+
+		options: {
+			position: 'topleft',
+			callback: function () {
+				polygon = map.editTools.startPolygon();
+				return polygon;
+			},
+			kind: 'polygon',
+			html: '▰'
+		}
+
+	});
+
+
+	L.NewMarkerControl = L.EditControl.extend({
+
+		options: {
+			position: 'topleft',
+			callback: map.editTools.startMarker,
+			kind: 'marker',
+			html: '🖈'
+		}
+
+	});
+
+	// L.NewRectangleControl = L.EditControl.extend({
+	//
+	// 	options: {
+	// 		position: 'topleft',
+	// 		callback: map.editTools.startRectangle,
+	// 		kind: 'rectangle',
+	// 		html: '⬛'
+	// 	}
+	//
+	// });
+
+	map.addControl(new L.NewMarkerControl());
+	// map.addControl(new L.NewLineControl());
+	map.addControl(new L.NewPolygonControl());
+
+	// map.addControl(new L.NewRectangleControl());
+
+
+	function subDivide(event) {
+		// map.eachLayer(function (layer) {
+		// 	console.log(layer.toGeoJSON())
+		// });
+		let geoJSON = polygon.toGeoJSON();
+		if (!geoJSON) return;
+		// console.log(geoJSON, turf.envelope(geoJSON))
+		// L.geoJSON(turf.hexGrid(turf.bbox(geoJSON), 0.05)).addTo(map);
+		L.geoJSON(turf.squareGrid(turf.bbox(geoJSON), 0.04, {mask: geoJSON})).addTo(map);
+		// L.rectangle(turf.envelope(geoJSON)).addTo(map);
+		// L.rectangle(turf.bbox(geoJSON)).addTo(map);
+		// console.log(turf.bbox(geoJSON))
+	}
+
+</script>
+</body>
+</html>
