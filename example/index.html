@@ -89,7 +89,7 @@
 			[42.467048, -76.457162]
 		]
 	]);
-	polygon.addTo(map).enableEdit();
+	// polygon.addTo(map).enableEdit();
 
 	L.NewPolygonControl = L.EditControl.extend({
 
@@ -117,36 +117,63 @@
 
 	});
 
-	// L.NewRectangleControl = L.EditControl.extend({
-	//
-	// 	options: {
-	// 		position: 'topleft',
-	// 		callback: map.editTools.startRectangle,
-	// 		kind: 'rectangle',
-	// 		html: '⬛'
-	// 	}
-	//
-	// });
+	var rectangle = L.rectangle([
+		[
+			[42.467111, -76.449802],
+			[42.467111, -76.457312],
+			[42.465053, -76.457312],
+			[42.465053, -76.449802],
+			[42.467111, -76.449802]
+		]
+	]);
+	rectangle.addTo(map).enableEdit();
+	L.NewRectangleControl = L.EditControl.extend({
+
+		options: {
+			position: 'topleft',
+			callback: function () {
+				rectangle = map.editTools.startRectangle();
+				return rectangle;
+			},
+			kind: 'rectangle',
+			html: '⬛'
+		}
+
+	});
 
 	map.addControl(new L.NewMarkerControl());
 	// map.addControl(new L.NewLineControl());
 	map.addControl(new L.NewPolygonControl());
-
-	// map.addControl(new L.NewRectangleControl());
-
+	map.addControl(new L.NewRectangleControl());
 
 	function subDivide(event) {
 		// map.eachLayer(function (layer) {
 		// 	console.log(layer.toGeoJSON())
 		// });
-		let geoJSON = polygon.toGeoJSON();
+		let geoJSON = rectangle.toGeoJSON();
+		// let geoJSON = polygon.toGeoJSON();
 		if (!geoJSON) return;
 		// console.log(geoJSON, turf.envelope(geoJSON))
 		// L.geoJSON(turf.hexGrid(turf.bbox(geoJSON), 0.05)).addTo(map);
-		L.geoJSON(turf.squareGrid(turf.bbox(geoJSON), 0.04, {mask: geoJSON})).addTo(map);
+		// L.geoJSON(turf.squareGrid(turf.bbox(geoJSON), 0.05, {mask: geoJSON})).addTo(map);
+		// L.geoJSON(turf.tesselate(geoJSON)).addTo(map);
 		// L.rectangle(turf.envelope(geoJSON)).addTo(map);
 		// L.rectangle(turf.bbox(geoJSON)).addTo(map);
 		// console.log(turf.bbox(geoJSON))
+		// grid = L.geoJSON(turf.squareGrid(turf.bbox(geoJSON), 0.05, {mask: geoJSON})).addTo(map);
+
+		// var points = turf.explode(geoJSON)
+		// grid = L.geoJSON(turf.pointOnFeature(turf.rec(turf.bbox(geoJSON), 0.05, {mask: geoJSON}))).addTo(map)
+		var squareGrid = turf.squareGrid(turf.bbox(geoJSON), 0.05);
+		turf.featureEach(squareGrid, function (currentFeature, featureIndex) {
+			currentFeature.properties.even = featureIndex % 2 === 0;
+		});
+		// grid = L.geoJSON(turf.dissolve(squareGrid, { propertyName: 'even'})).addTo(map);
+		let dissolve = turf.dissolve(squareGrid, { propertyName: 'even'});
+		turf.featureEach(dissolve, function (currentFeature) {
+			L.rectangle(turf.getCoords(turf.flip(currentFeature))).addTo(map)
+				.enableEdit();
+		});
 	}
 
 </script>
