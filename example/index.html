@@ -89,7 +89,7 @@
 			[42.467048, -76.457162]
 		]
 	]);
-	// polygon.addTo(map).enableEdit();
+	polygon.addTo(map).enableEdit();
 
 	L.NewPolygonControl = L.EditControl.extend({
 
@@ -117,16 +117,16 @@
 
 	});
 
-	polygon = L.rectangle([
-		[
-			[42.467111, -76.449802],
-			[42.467111, -76.457312],
-			[42.465053, -76.457312],
-			[42.465053, -76.449802],
-			[42.467111, -76.449802]
-		]
-	]);
-	polygon.addTo(map).enableEdit();
+	// polygon = L.rectangle([
+	// 	[
+	// 		[42.467111, -76.449802],
+	// 		[42.467111, -76.457312],
+	// 		[42.465053, -76.457312],
+	// 		[42.465053, -76.449802],
+	// 		[42.467111, -76.449802]
+	// 	]
+	// ]);
+	// polygon.addTo(map).enableEdit();
 
 	L.NewRectangleControl = L.EditControl.extend({
 
@@ -167,6 +167,7 @@
 		// L.rectangle(turf.envelope(geoJSON)).addTo(map);
 		// L.rectangle(turf.bbox(geoJSON)).addTo(map);
 		// console.log(turf.bbox(geoJSON))
+		// L.geoJSON(turf.bboxPolygon((turf.bbox(geoJSON)))).addTo(map)
 		// grid = L.geoJSON(turf.squareGrid(turf.bbox(geoJSON), 0.05, {mask: geoJSON})).addTo(map);
 
 		// var points = turf.exploded(geoJSON)
@@ -236,13 +237,16 @@
 
 		function getPlots(polygon, levels, level) {
 			let centers = [];
-			let points = turf.explode(polygon);
+			let points = turf.explode(turf.bboxPolygon(turf.bbox(polygon)));
 			let center = turf.center(points);
 			Array.prototype.push.apply(centers, points.features.map(vertex => {
 				return turf.center(turf.featureCollection([vertex, center]))
 			}));
 			let bbox = turf.bbox(polygon);
-			let plots = turf.voronoi(turf.featureCollection(centers), {bbox: bbox}).features.filter(x => x);
+			let plots = turf.voronoi(turf.featureCollection(centers), {bbox: bbox})
+				.features
+				.filter(x => x)
+				.map(feature=>turf.intersect(feature,polygon))
 			if (level < levels) {
 				level++;
 				let subPlots = [];
@@ -256,12 +260,17 @@
 		let levels = 3,
 			level = 1;
 		let plots = getPlots(geoJSON, levels, level);
-		plots.forEach(plot=>{
-			L.rectangle(featureToL(plot)).addTo(map).enableEdit()
+		plots.filter(x=>x).forEach(plot=>{
+			L.polygon(featureToL(plot)).addTo(map).enableEdit()
 		})
 
 	}
 	subDivide();
+
+	function log(feature) {
+		L.geoJSON(feature).addTo(map)
+		return feature;
+	}
 
 </script>
 </body>
