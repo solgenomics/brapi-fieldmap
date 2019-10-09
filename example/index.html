@@ -117,7 +117,7 @@
 
 	});
 
-	var rectangle = L.rectangle([
+	polygon = L.rectangle([
 		[
 			[42.467111, -76.449802],
 			[42.467111, -76.457312],
@@ -126,14 +126,15 @@
 			[42.467111, -76.449802]
 		]
 	]);
-	rectangle.addTo(map).enableEdit();
+	polygon.addTo(map).enableEdit();
+
 	L.NewRectangleControl = L.EditControl.extend({
 
 		options: {
 			position: 'topleft',
 			callback: function () {
-				rectangle = map.editTools.startRectangle();
-				return rectangle;
+				polygon = map.editTools.startRectangle();
+				return polygon;
 			},
 			kind: 'rectangle',
 			html: '⬛'
@@ -146,11 +147,17 @@
 	map.addControl(new L.NewPolygonControl());
 	map.addControl(new L.NewRectangleControl());
 
+	function featureToL(feature) {
+		return turf.getCoords(turf.flip(feature));
+	}
+
+	var geoJSON;
+
 	function subDivide(event) {
 		// map.eachLayer(function (layer) {
 		// 	console.log(layer.toGeoJSON())
 		// });
-		let geoJSON = rectangle.toGeoJSON();
+		geoJSON = polygon.toGeoJSON();
 		// let geoJSON = polygon.toGeoJSON();
 		if (!geoJSON) return;
 		// console.log(geoJSON, turf.envelope(geoJSON))
@@ -162,19 +169,99 @@
 		// console.log(turf.bbox(geoJSON))
 		// grid = L.geoJSON(turf.squareGrid(turf.bbox(geoJSON), 0.05, {mask: geoJSON})).addTo(map);
 
-		// var points = turf.explode(geoJSON)
+		// var points = turf.exploded(geoJSON)
 		// grid = L.geoJSON(turf.pointOnFeature(turf.rec(turf.bbox(geoJSON), 0.05, {mask: geoJSON}))).addTo(map)
-		var squareGrid = turf.squareGrid(turf.bbox(geoJSON), 0.05);
-		turf.featureEach(squareGrid, function (currentFeature, featureIndex) {
-			currentFeature.properties.even = featureIndex % 2 === 0;
-		});
-		// grid = L.geoJSON(turf.dissolve(squareGrid, { propertyName: 'even'})).addTo(map);
-		let dissolve = turf.dissolve(squareGrid, { propertyName: 'even'});
-		turf.featureEach(dissolve, function (currentFeature) {
-			L.rectangle(turf.getCoords(turf.flip(currentFeature))).addTo(map)
-				.enableEdit();
-		});
+
+		// var squareGrid = turf.squareGrid(turf.bbox(geoJSON), 0.05);
+		// // var squareGrid = turf.squareGrid(turf.bbox(geoJSON), 0.05);
+		// let join = false;
+		// turf.featureEach(squareGrid, function (currentFeature, featureIndex) {
+		// 	// currentFeature.properties.even = featureIndex % 2 === 0;
+		// 	currentFeature.properties.join = (join = !join);
+		// });
+		// // grid = L.geoJSON(turf.dissolve(squareGrid, { propertyName: 'even'})).addTo(map);
+		// let dissolve = turf.dissolve(squareGrid, { propertyName: 'join'});
+		// turf.featureEach(dissolve, function (currentFeature) {
+		// 	L.rectangle(turf.getCoords(turf.flip(currentFeature))).addTo(map)
+		// 		.enableEdit();
+		// });
+
+		// let bbox = turf.bbox(geoJSON);
+		// var squareGrid = turf.squareGrid(bbox,0.1, {mask: geoJSON});
+		// var centroids = turf.featureCollection(squareGrid.features.map((feature)=>{
+		// 	return turf.centroid(feature);
+		// }));
+		// grid = L.geoJSON(turf.voronoi(centroids,{bbox:bbox}).features.map((feature)=>{
+		// 	return turf.intersect(feature,geoJSON);
+		// })).addTo(map);
+
+		// let bbox = turf.bbox(geoJSON);
+		// var squareGrid = turf.squareGrid(bbox,0.02/*, {mask: geoJSON}*/);
+		// let group = 0,
+		// 	count = 1,
+		// 	plotSize = 50;
+		// turf.featureEach(squareGrid, function (currentFeature, featureIndex) {
+		// 	currentFeature.properties.join = "group"+group;
+		// 	if (count++===plotSize) {
+		// 		count = 1;
+		// 		group++;
+		// 	}
+		// });
+		// let dissolve = turf.dissolve(squareGrid, {propertyName: 'join'})
+		// grid = L.geoJSON(dissolve).addTo(map);
+
+		// let bbox = turf.bbox(geoJSON);
+		// var squareGrid = turf.squareGrid(bbox,0.1, {mask: geoJSON});
+		// var pointGrid = turf.pointGrid(bbox,0.1, {mask: geoJSON});
+		// var centroids = turf.featureCollection(squareGrid.features.map((feature)=>{
+		// 	return turf.intersect(feature,geoJSON)
+		// }).map((feature)=>{
+		// 	return turf.centroid(feature);
+		// }));
+		// grid = L.geoJSON(centroids).addTo(map);
+		// grid = L.geoJSON(squareGrid).addTo(map);
+
+		// let rows = 2,
+		// 	cols = 1,
+		// 	plotFactor = 2; // length / width
+		// let plotNumber = rows*cols,
+		// 	plotArea = turf.area(geoJSON)/plotNumber, // square meters
+		// 	plotWidth = Math.sqrt(plotArea/plotFactor), // width * length = area => width * (width*factor) = area => width = sqrt(area/factor)
+		// 	plotLength = plotArea/plotWidth;
+
+		// let perimeter = turf.polygonToLine(geoJSON);
+		// turf.lineChunk(perimeter, turf.length(perimeter)/plotNumber).features.forEach((feature)=>{
+		// 	L.polyline(featureToL(feature)).addTo(map).enableEdit()
+		// })
+
+		function getPlots(polygon, levels, level) {
+			let centers = [];
+			let points = turf.explode(polygon);
+			let center = turf.center(points);
+			Array.prototype.push.apply(centers, points.features.map(vertex => {
+				return turf.center(turf.featureCollection([vertex, center]))
+			}));
+			let bbox = turf.bbox(polygon);
+			let plots = turf.voronoi(turf.featureCollection(centers), {bbox: bbox}).features.filter(x => x);
+			if (level < levels) {
+				level++;
+				let subPlots = [];
+				plots.forEach(plot=>{
+					subPlots.push(...getPlots(plot, levels, level));
+				});
+				return subPlots;
+			}
+			return plots;
+		}
+		let levels = 3,
+			level = 1;
+		let plots = getPlots(geoJSON, levels, level);
+		plots.forEach(plot=>{
+			L.rectangle(featureToL(plot)).addTo(map).enableEdit()
+		})
+
 	}
+	subDivide();
 
 </script>
 </body>
