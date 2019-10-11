@@ -10,12 +10,14 @@ const DEFAULT_OPTS = {
 };
 
 export default class Fieldmap {
-  constructor(opts) {
+  constructor(map_container,brapi_endpoint,studyDbId,opts) {
+    this.map_container = d3.select(map_container).style("background-color","#888");
+    this.brapi_endpoint = brapi_endpoint;
+    this.studyDbId = studyDbId;
 
     // Parse Options
     this.opts = Object.assign(Object.create(DEFAULT_OPTS),opts||{});
-
-    this.map = L.map('map', {editable: true}).setView(this.opts.defaultPos, 16);
+    this.map = L.map(this.map_container.node(), {editable: true}).setView(this.opts.defaultPos, 16);
     this.map.scrollWheelZoom.disable();
 
     this.tilelayer = L.tileLayer.fallback('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false', {
@@ -109,5 +111,14 @@ export default class Fieldmap {
 
   featureToL(feature) {
     return turf.getCoords(turf.flip(feature));
+  }
+
+  setLocation(studyDbId) {
+    this.brapi = BrAPI(this.brapi_endpoint,"1.2",null);
+    this.brapi.studies_detail({studyDbId: studyDbId})
+      .map((study)=>{
+        if (!(study && study.location)) return;
+        this.map.setView([study.location.latitude, study.location.longitude]);
+      })
   }
 }

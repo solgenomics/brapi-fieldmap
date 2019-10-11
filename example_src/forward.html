@@ -7,6 +7,13 @@
 </form>
 <form class="form-inline" style="padding:10px;">
   <div class="form-group">
+    <label for="studyDbId">StudyDbId</label>
+    <input type="text" class="form-control" id="studyDbId" value="3165">
+  </div>
+  <a class="btn btn-default" onclick="fieldMap.setLocation(d3.select('#studyDbId').node().value)">Set location</a>
+</form>
+<form class="form-inline" style="padding:10px;">
+  <div class="form-group">
     <label for="rows">rows</label>
     <input type="text" class="form-control" id="rows" name="rows" value="2">
   </div>

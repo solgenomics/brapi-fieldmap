@@ -4,5 +4,7 @@
 <script src="example_files/BrAPI.js"></script>
 <script src="example_files/BrAPIFieldmap.js" charset="utf-8"></script>
 <script type="text/javascript">
-	var fieldMap = new BrAPIFieldmap("#map", {});
+  var fieldMap = new BrAPIFieldmap("#map",
+    d3.select('#endpoint').node().value,
+    d3.select('#studyDbId').node().value);
 </script>
