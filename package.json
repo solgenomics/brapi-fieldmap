@@ -33,7 +33,8 @@
     "prepare": "mkdir -p dist && rollup -c",
     "copy_example_files": "rm -r docs/example_files; mkdir -p docs/example_files && cp dist/* node_modules/@solgenomics/brapijs/build/BrAPI.js node_modules/@turf/turf/turf.js node_modules/d3/dist/d3.js node_modules/leaflet/dist/leaflet.js node_modules/leaflet/dist/leaflet.css  docs/example_files",
     "prepublishOnly": "npm run copy_example_files && wrapbrapp",
-    "build_example": "npm run prepare && npm run copy_example_files && npm run prepublishOnly"
+    "build_example": "npm run prepare && npm run copy_example_files && npm run prepublishOnly",
+    "watch": "rollup -c -w -m inline"
   },
   "brapp": {
     "out": "docs/example.html",

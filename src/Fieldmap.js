@@ -7,6 +7,7 @@ const DEFAULT_OPTS = {
   brapi_auth:null,
   brapi_pageSize:1000,
   defaultPos: [42.464292, -76.451431],
+  plotScaleFactor: 0.85,
 };
 
 export default class Fieldmap {
@@ -84,7 +85,7 @@ export default class Fieldmap {
     this.map.addControl(new L.NewRectangleControl());
   }
 
-  subDivide() {
+  generate() {
     if (!this.polygon) return;
     let geoJSON = this.polygon.toGeoJSON();
     if (!geoJSON) return;
@@ -102,11 +103,10 @@ export default class Fieldmap {
     }
     let geo = turf.voronoi(turf.featureCollection(points), {bbox: turf.bbox(geoJSON)})
       .features.map((plot)=>turf.intersect(plot, geoJSON));
-    geo.forEach(plot=>{
-      L.polygon(this.featureToL(turf.transformScale(plot, 0.85))).addTo(this.map).enableEdit()
+    geo.filter(x=>x).forEach(plot=>{
+      L.polygon(this.featureToL(turf.transformScale(plot, this.opts.plotScaleFactor))).addTo(this.map).enableEdit()
     });
     this.polygon.remove();
-
   }
 
   featureToL(feature) {
