@@ -1,0 +1,8 @@
+dist/
+.DS_Store
+node_modules/
+ignore/
+npm-debug.log
+package-lock.json
+docs/example.html
+docs/example_files

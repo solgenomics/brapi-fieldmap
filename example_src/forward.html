@@ -1,0 +1,19 @@
+<link rel="stylesheet" href="example_files/leaflet.css" />
+<form class="form-inline" style="padding:10px;">
+  <div class="form-group">
+    <label for="endpoint">BrAPI Base URL</label>
+    <input type="text" class="form-control" id="endpoint" name="endpoint" value="https://cassavabase.org/brapi/v1">
+  </div>
+</form>
+<form class="form-inline" style="padding:10px;">
+  <div class="form-group">
+    <label for="rows">rows</label>
+    <input type="text" class="form-control" id="rows" name="rows" value="2">
+  </div>
+  <div class="form-group">
+    <label for="cols">cols</label>
+    <input type="text" class="form-control" id="cols" name="cols" value="4">
+  </div>
+  <a class="btn btn-default" onclick="fieldMap.subDivide()">Subdivide</a>
+</form>
+
