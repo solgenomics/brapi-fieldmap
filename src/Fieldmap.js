@@ -4,20 +4,20 @@ import "../lib/leaflet.tilelayer.fallback.js";
 import "../lib/Leaflet.Editable";
 
 const DEFAULT_OPTS = {
-  brapi_auth:null,
-  brapi_pageSize:1000,
+  brapi_auth: null,
+  brapi_pageSize: 1000,
   defaultPos: [42.464292, -76.451431],
   plotScaleFactor: 0.85,
 };
 
 export default class Fieldmap {
-  constructor(map_container,brapi_endpoint,studyDbId,opts) {
-    this.map_container = d3.select(map_container).style("background-color","#888");
+  constructor(map_container, brapi_endpoint, studyDbId, opts) {
+    this.map_container = d3.select(map_container).style("background-color", "#888");
     this.brapi_endpoint = brapi_endpoint;
     this.studyDbId = studyDbId;
 
     // Parse Options
-    this.opts = Object.assign(Object.create(DEFAULT_OPTS),opts||{});
+    this.opts = Object.assign(Object.create(DEFAULT_OPTS), opts || {});
     this.map = L.map(this.map_container.node(), {editable: true}).setView(this.opts.defaultPos, 16);
     this.map.scrollWheelZoom.disable();
 
@@ -96,8 +96,8 @@ export default class Fieldmap {
       plotWidth = (bbox[3]-bbox[1])/rows,
       plotLength = (bbox[2]-bbox[0])/cols;
     let points = [];
-    for (let i = 0; i<rows; i++) {
-      for (let j = 0; j<cols; j++) {
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
         points.push(turf.point([bbox[0]+plotLength/2+j*plotLength, bbox[1]+plotWidth/2+i*plotWidth]));
       }
     }
@@ -114,7 +114,7 @@ export default class Fieldmap {
   }
 
   setLocation(studyDbId) {
-    this.brapi = BrAPI(this.brapi_endpoint,"1.2",null);
+    this.brapi = BrAPI(this.brapi_endpoint, "1.2", null);
     this.brapi.studies_detail({studyDbId: studyDbId})
       .map((study)=>{
         if (!(study && study.location)) return;
