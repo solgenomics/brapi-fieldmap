@@ -90,6 +90,26 @@ export default class Fieldmap {
     let geoJSON = this.polygon.toGeoJSON();
     if (!geoJSON) return;
 
+    // try to make horizontal before to calculate row and col FIXME improve
+    let cellSide = Math.sqrt(turf.area(geoJSON))/1000/10/2;
+    let grid = turf.pointGrid(turf.bbox(geoJSON), cellSide, {mask: geoJSON});
+    let center = turf.getCoord(turf.centerOfMass(geoJSON));
+    let slopes = grid.features
+      .map(f=>{
+        let coord = turf.getCoord(f);
+        let slope = (coord[1]-center[1])/(coord[0]-center[0]);
+        return slope === Infinity ? Number.MAX_VALUE : slope === -Infinity ? Number.MIN_VALUE : slope;
+      })
+      .filter(x=>[NaN].indexOf(x) < 0);
+    let avgSlope = slopes
+      .reduce((prev, curr)=>{
+        return prev+curr;
+      }, 0)/grid.features.length;
+    let bearing = turf.bearing(center, [center[0]+cellSide, center[1]+cellSide*avgSlope]);
+    let rotation = -(bearing-90);
+    geoJSON = turf.transformRotate(geoJSON, rotation);
+
+    // calculate cell centroids
     let bbox = turf.bbox(geoJSON);
     let rows = d3.select("#rows").node().value,
       cols = d3.select("#cols").node().value,
@@ -101,9 +121,17 @@ export default class Fieldmap {
         points.push(turf.point([bbox[0]+plotLength/2+j*plotLength, bbox[1]+plotWidth/2+i*plotWidth]));
       }
     }
-    let geo = turf.voronoi(turf.featureCollection(points), {bbox: turf.bbox(geoJSON)})
-      .features.map((plot)=>turf.intersect(plot, geoJSON));
-    geo.filter(x=>x).forEach(plot=>{
+
+    // generate plots
+    let plots = turf.voronoi(turf.featureCollection(points), {bbox: turf.bbox(geoJSON)})
+      .features.filter(x=>x).map((plot)=>turf.intersect(plot, geoJSON));
+
+    // rotate to original position
+    plots = turf.featureCollection(plots.filter(x=>x));
+    plots = turf.transformRotate(plots, -rotation);
+
+    // draw
+    plots.features.forEach(plot=>{
       L.polygon(this.featureToL(turf.transformScale(plot, this.opts.plotScaleFactor))).addTo(this.map).enableEdit()
     });
     this.polygon.remove();
@@ -121,4 +149,9 @@ export default class Fieldmap {
         this.map.setView([study.location.latitude, study.location.longitude]);
       })
   }
+}
+
+function debug(feature) {
+  L.geoJSON(feature).addTo(fieldMap.map);
+  return feature;
 }
