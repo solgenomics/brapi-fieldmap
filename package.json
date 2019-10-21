@@ -21,7 +21,7 @@
     "type": "git",
     "url": "https://github.com/solgenomics/BrAPI-Fieldmap.git"
   },
-  "author": "",
+  "author": "Nahuel Soldevilla <nahuel@leafnode.io>",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/solgenomics/BrAPI-Fieldmap/issues"
