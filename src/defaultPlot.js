@@ -1,31 +1,32 @@
 export default function(FieldMap){
-  FieldMap.prototype.defaultPlot = function(row,col,size){
-    size = size || this.opts.defaultPlotWidth;
-    if(!this.opts.shape_memo || this.opts.shape_memo.size!=size){
+  FieldMap.prototype.defaultPlot = function(row,col,plotWidth,plotLength){
+    plotWidth = plotWidth || this.opts.defaultPlotWidth;
+    plotLength = plotLength || this.opts.defaultPlotWidth;
+    if(!this.opts.shape_memo || this.opts.shape_memo.size!=plotWidth){
       this.opts.shape_memo = Array(this.opts.gridSize*this.opts.gridSize);
-      this.opts.shape_memo.size = size;
+      this.opts.shape_memo.size = plotWidth;
     } 
     if(!this.opts.shape_memo[(row*this.opts.gridSize)+col]){
       var o = turf.point(this.opts.defaultPos);
       var tl = turf.destination(
         turf.destination(
           o,
-          size*col,
+          plotWidth*col,
           90,
           {'units':'kilometers'}
         ),
-        size*row,
+        plotLength*row,
         180,
         {'units':'kilometers'}
       );
       var br = turf.destination(
         turf.destination(
           tl,
-          size,
+          plotWidth,
           90,
           {'units':'kilometers'}
         ),
-        size,
+        plotLength,
         180,
         {'units':'kilometers'}
       );

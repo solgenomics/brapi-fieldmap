@@ -327,10 +327,18 @@ export default class Fieldmap {
       plot_XY_groups[plot._col][plot._row].push(plot);
     });
 
-
     if(!plots_shaped){
-      const area = turf.area(this.geoJson);
-      const plotWidth = Math.sqrt(area/data.plots.length)/1000;
+      const bbox = turf.bbox(this.geoJson),
+        cols = plot_XY_groups.length,
+        rows = plot_XY_groups.reduce((acc, col)=>{
+          col.forEach((row, i)=>{
+            if (!row) return;
+            acc[i] = acc[i]+1 || 1;
+          });
+          return acc;
+        }, []).filter(x=>x).length,
+        plotLength = turf.length(turf.lineString([[bbox[0],bbox[1]],[bbox[0],bbox[3]]]))/rows,
+        plotWidth = turf.length(turf.lineString([[bbox[0],bbox[1]],[bbox[2],bbox[1]]]))/cols;
       // Use default plot shapes/positions based on X/Y positions
       for (let X in plot_XY_groups) {
         if (plot_XY_groups.hasOwnProperty(X)) {
@@ -338,7 +346,7 @@ export default class Fieldmap {
             if (plot_XY_groups[X].hasOwnProperty(Y)) {
               X = parseInt(X)
               Y = parseInt(Y)
-              let polygon = this.defaultPlot(Y, X, plotWidth);
+              let polygon = this.defaultPlot(Y, X, plotWidth, plotLength);
               // if for some reason plots have the same x/y, split that x/y region
               plot_XY_groups[X][Y].forEach((plot, i)=>{
                 plot._geoJSON = this.splitPlot(polygon, plot_XY_groups[X][Y].length, i);
