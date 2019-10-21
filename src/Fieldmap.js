@@ -103,7 +103,10 @@ export default class Fieldmap {
       plots = turf.transformRotate(plots, -this.rotation);
       if (this.plotsLayer) this.plotsLayer.remove();
       this.plotsLayer = L.featureGroup(plots.features
-        .map((plot)=>L.polygon(this.featureToL(turf.transformScale(plot, this.opts.plotScaleFactor)))))
+        .map((plot)=>L.polygon(this.featureToL(turf.transformScale(plot, this.opts.plotScaleFactor)), {
+          color: '#444',
+          weight: 1
+        })))
         .addTo(this.map);
       this.polygon.remove();
     });
