@@ -12,7 +12,8 @@
     "@solgenomics/brapp-wrapper": "^1.1.0",
     "@turf/turf": "^5.1.6",
     "d3": "^5.7.0",
-    "leaflet": "^1.3.4",
+    "leaflet": "^1.5.1",
+    "leaflet.path.drag": "0.0.6",
     "rollup-plugin-commonjs": "^9.1.8",
     "rollup-plugin-node-resolve": "^3.4.0"
   },
@@ -27,7 +28,7 @@
   },
   "scripts": {
     "prepare": "mkdir -p dist && rollup -c",
-    "copy_example_files": "rm -r docs/example_files; mkdir -p docs/example_files && cp dist/* node_modules/@solgenomics/brapijs/build/BrAPI.js node_modules/@turf/turf/turf.js node_modules/d3/dist/d3.js node_modules/leaflet/dist/leaflet.js node_modules/leaflet/dist/leaflet.css  docs/example_files",
+    "copy_example_files": "rm -r docs/example_files; mkdir -p docs/example_files && cp dist/* node_modules/@solgenomics/brapijs/build/BrAPI.js node_modules/@turf/turf/turf.js node_modules/d3/dist/d3.js node_modules/leaflet/dist/leaflet.js node_modules/leaflet/dist/leaflet.css node_modules/leaflet.path.drag/src/Path.Drag.js docs/example_files",
     "prepublishOnly": "npm run copy_example_files && wrapbrapp",
     "build_example": "npm run prepare && npm run copy_example_files && npm run prepublishOnly",
     "watch": "rollup -c -w -m inline"

@@ -11,6 +11,9 @@ const DEFAULT_OPTS = {
   gridSize: 500,
   defaultPlotWidth: 0.002,
   plotScaleFactor: 0.85,
+  style: {
+    weight: 1
+  }
 };
 
 export default class Fieldmap {
@@ -97,19 +100,40 @@ export default class Fieldmap {
     this.level();
     this.generatePlots(studyDbId);
 
-    this.data.then((data)=>{
-      let plots = data.plots;
+    this.data.then(()=>{
       // rotate to original position
-      plots = turf.transformRotate(plots, -this.rotation);
-      if (this.plotsLayer) this.plotsLayer.remove();
-      this.plotsLayer = L.featureGroup(plots.features
-        .map((plot)=>L.polygon(this.featureToL(turf.transformScale(plot, this.opts.plotScaleFactor)), {
-          color: '#444',
-          weight: 1
-        })))
-        .addTo(this.map);
+      this.plots = turf.transformRotate(this.plots, -this.rotation);
+      this.drawPlots();
       this.polygon.remove();
     });
+  }
+
+  drawPlots() {
+    if (this.plotsLayer) this.plotsLayer.remove();
+    this.plotsLayer = L.featureGroup(this.plots.features
+      .map((plot)=>L.polygon(this.featureToL(turf.transformScale(plot, this.opts.plotScaleFactor)),
+        this.opts.style)))
+      .on('click', (e)=>{
+        this.enableTranslate(e.target)
+      })
+      .addTo(this.map);
+  }
+
+  enableTranslate(plotGroup) {
+    this.plotsLayer.remove();
+    this.editableFieldLayer = L.polygon(this.featureToL(turf.convex(plotGroup.toGeoJSON())), this.opts.style)
+      .on('editable:dragend', (e)=>{
+        let target = e.target;
+        let startPos = turf.center(this.plots);
+        let endPos = turf.center(target.toGeoJSON());
+        turf.transformTranslate(this.plots,
+          turf.distance(startPos, endPos),
+          turf.bearing(startPos, endPos), {mutate: true});
+        this.drawPlots();
+        target.remove();
+      })
+      .addTo(this.map)
+      .enableEdit();
   }
 
   /**
@@ -158,10 +182,10 @@ export default class Fieldmap {
     }
 
     // generate plots
-    let plots = turf.voronoi(turf.featureCollection(points), {bbox: turf.bbox(this.geoJson)})
+    this.plots = turf.voronoi(turf.featureCollection(points), {bbox: turf.bbox(this.geoJson)})
       .features.filter(x=>x).map((plot)=>turf.intersect(plot, this.geoJson));
-    plots = turf.featureCollection(plots);
-    this.data = Promise.resolve({plots});
+    this.plots = turf.featureCollection(this.plots);
+    this.data = Promise.resolve({plots: this.plots});
   }
 
   generateFromStudy(studyDbId) {
@@ -169,7 +193,7 @@ export default class Fieldmap {
     this.opts.defaultPos = [bbox[0], bbox[3]];
     this.load_ObsUnits(studyDbId)
       .then((data)=>{
-        data.plots = turf.featureCollection(data.plots.map(p=>p._geoJSON));
+        this.plots = turf.featureCollection(data.plots.map(p=>p._geoJSON));
       });
   }
 
