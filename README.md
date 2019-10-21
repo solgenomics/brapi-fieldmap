@@ -11,7 +11,7 @@ _In progress_
 - [D3.js](https://github.com/d3/d3) (v4)
 - [Leaflet]
 - [Leaflet.Editable]
-- [Leaflet.Path.Drag]
+- [Leaflet.Path.Transform]
 
 ## Authors and acknowledgment
 Nahuel Soldevilla <nahuel@leafnode.io>
@@ -23,6 +23,6 @@ Developed at the [Boyce Thompson Institute] in collaboration with [Integrated Br
 [BrAPI-HeatMap]: https://github.com/solgenomics/BrAPI-HeatMap
 [Leaflet.Editable]: https://github.com/Leaflet/Leaflet.Editable
 [Leaflet]: https://leafletjs.com/
-[Leaflet.Path.Drag]: https://github.com/Leaflet/Path.Drag.js
+[Leaflet.Path.Transform]: https://github.com/w8r/Leaflet.Path.Transform
 [Boyce Thompson Institute]: https://btiscience.org/
 [Integrated Breeding Platform]: https://integratedbreeding.net/

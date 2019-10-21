@@ -114,26 +114,42 @@ export default class Fieldmap {
       .map((plot)=>L.polygon(this.featureToL(turf.transformScale(plot, this.opts.plotScaleFactor)),
         this.opts.style)))
       .on('click', (e)=>{
-        this.enableTranslate(e.target)
+        this.enableTransform(e.target)
       })
       .addTo(this.map);
   }
 
-  enableTranslate(plotGroup) {
+  enableTransform(plotGroup) {
     this.plotsLayer.remove();
-    this.editableFieldLayer = L.polygon(this.featureToL(turf.convex(plotGroup.toGeoJSON())), this.opts.style)
-      .on('editable:dragend', (e)=>{
+    this.editablePolygon = L.polygon(this.featureToL(turf.convex(plotGroup.toGeoJSON())),
+      Object.assign({transform:true,draggable:true}, this.opts.style))
+      .on('dragend', (e)=>{
         let target = e.target;
         let startPos = turf.center(this.plots);
         let endPos = turf.center(target.toGeoJSON());
         turf.transformTranslate(this.plots,
           turf.distance(startPos, endPos),
           turf.bearing(startPos, endPos), {mutate: true});
-        this.drawPlots();
-        target.remove();
+        this.finishTranslate();
       })
-      .addTo(this.map)
-      .enableEdit();
+      .on('rotateend', (e)=>{
+        turf.transformRotate(this.plots, turf.radiansToDegrees(e.rotation), {mutate: true});
+        this.drawPlots();
+        this.finishTranslate();
+      })
+      .addTo(this.map);
+      this.editablePolygon.transform.enable();
+      this.editablePolygon.dragging.enable();
+  }
+
+  finishTranslate() {
+    let polygon = this.editablePolygon;
+    polygon.transform.disable();
+    polygon.dragging.disable();
+    this.drawPlots();
+    setTimeout(()=>{
+      polygon.remove()
+    });
   }
 
   /**
