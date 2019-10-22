@@ -132,6 +132,28 @@ export default class Fieldmap {
           turf.bearing(startPos, endPos), {mutate: true});
         this.finishTranslate();
       })
+      .on('scaleend', (e)=>{
+        let target = e.target;
+        let startPos = turf.center(this.plots);
+        let endPos = turf.center(target.toGeoJSON());
+        let startArea = turf.area(this.plots);
+        let endArea = turf.area(target.toGeoJSON());
+        let factor = Math.sqrt(endArea/startArea);
+        this.plots.features.forEach((plot)=>{
+          let startCoord = turf.getCoords(startPos);
+          let plotCoord = turf.getCoords(turf.center(plot));
+          let bearing = turf.bearing(startCoord,plotCoord);
+          let distance = turf.distance(startCoord,plotCoord);
+          // after resize, bearing to centroid of all plots is the same, but scaled by the resize factor
+          let plotEndCoord = turf.getCoords(turf.destination(turf.getCoords(endPos),distance*factor,bearing));
+          turf.transformTranslate(plot,
+            turf.distance(plotCoord, plotEndCoord),
+            turf.bearing(plotCoord, plotEndCoord), {mutate: true});
+          turf.transformScale(plot, factor, {mutate: true})
+        });
+        this.drawPlots();
+        this.finishTranslate();
+      })
       .on('rotateend', (e)=>{
         turf.transformRotate(this.plots, turf.radiansToDegrees(e.rotation), {mutate: true});
         this.drawPlots();
