@@ -391,6 +391,11 @@ export default class Fieldmap {
     return data;
   }
 
+  fitBounds(feature) {
+    let bbox = turf.bbox(feature);
+    this.map.fitBounds([[bbox[1], bbox[0]], [bbox[3], bbox[2]]]);
+  }
+
   layout_width(median_block_length,number_of_plots){
     let bllen = median_block_length;
     let squarelen = Math.round(Math.sqrt(number_of_plots));
