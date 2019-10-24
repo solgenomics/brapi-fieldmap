@@ -19,12 +19,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/solgenomics/BrAPI-Fieldmap.git"
+    "url": "https://github.com/solgenomics/brapi-fieldmap.git"
   },
   "author": "Nahuel Soldevilla <nahuel@leafnode.io>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/solgenomics/BrAPI-Fieldmap/issues"
+    "url": "https://github.com/solgenomics/brapi-fieldmap/issues"
   },
   "scripts": {
     "prepare": "mkdir -p dist && rollup -c",
@@ -35,8 +35,8 @@
   },
   "brapp": {
     "out": "docs/example.html",
-    "name": "BrAPI Fieldmap",
-    "link": "https://github.com/solgenomics/BrAPI-Fieldmap",
+    "name": "GeoJson Fieldmap editor",
+    "link": "https://github.com/solgenomics/brapi-fieldmap",
     "forward": "example_src/forward.html",
     "main": "example_src/main.html",
     "scripts": "example_src/scripts.html"
