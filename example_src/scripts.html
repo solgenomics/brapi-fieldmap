@@ -5,12 +5,15 @@
 <script src="example_files/BrAPI.js"></script>
 <script src="example_files/BrAPIFieldmap.js" charset="utf-8"></script>
 <script type="text/javascript">
-  function generate(studyDbId) {
+  function setupBrAPI() {
     fieldMap.brapi_endpoint = d3.select('#endpoint').node().value;
-    fieldMap.generate(studyDbId);
+  }
+  function load(studyDbId) {
+    setupBrAPI();
+    fieldMap.load(studyDbId);
   }
   function update() {
-    fieldMap.brapi_endpoint = d3.select('#endpoint').node().value;
+    setupBrAPI();
     fieldMap.update();
   }
   var fieldMap = new BrAPIFieldmap("#map", d3.select('#endpoint').node().value);

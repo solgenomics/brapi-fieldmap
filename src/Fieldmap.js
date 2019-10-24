@@ -82,7 +82,7 @@ export default class Fieldmap {
 
   }
 
-  generate(studyDbId) {
+  load(studyDbId) {
     if (this.polygon) {
       this.geoJson = this.polygon.toGeoJSON();
       this.level();
@@ -195,34 +195,10 @@ export default class Fieldmap {
   }
 
   generatePlots(studyDbId) {
-    if (studyDbId) {
-      return this.generateFromStudy(studyDbId);
-    }
-
-    // calculate cell centroids
-    let bbox = turf.bbox(this.geoJson);
-    let rows = d3.select("#rows").node().value,
-      cols = d3.select("#cols").node().value,
-      plotWidth = (bbox[3]-bbox[1])/rows,
-      plotLength = (bbox[2]-bbox[0])/cols;
-    let points = [];
-    for (let i = 0; i < rows; i++) {
-      for (let j = 0; j < cols; j++) {
-        points.push(turf.point([bbox[0]+plotLength/2+j*plotLength, bbox[1]+plotWidth/2+i*plotWidth]));
-      }
-    }
-
-    // generate plots
-    this.plots = turf.voronoi(turf.featureCollection(points), {bbox: turf.bbox(this.geoJson)})
-      .features.filter(x=>x).map((plot)=>turf.intersect(plot, this.geoJson));
-    this.plots = turf.featureCollection(this.plots);
-    this.data = Promise.resolve();
-  }
-
-  generateFromStudy(studyDbId) {
-    this.load_ObsUnits(studyDbId)
+    return this.load_ObsUnits(studyDbId)
       .then((data)=>{
         this.plots = turf.featureCollection(data.plots.map(p=>p._geoJSON));
+        this.fitBounds(this.plots);
       });
   }
 
