@@ -2,13 +2,13 @@
 <form class="form-inline" style="padding:10px;">
   <div class="form-group">
     <label for="endpoint">BrAPI Base URL</label>
-      <input type="text" class="form-control" id="endpoint" value="https://cassavabase.org/brapi/v1">
+      <input type="text" class="form-control" id="endpoint" value="http://localhost:7080/brapi/v2">
   </div>
 </form>
 <form class="form-inline" style="padding:10px;">
   <div class="form-group">
     <label for="studyDbId">StudyDbId</label>
-      <input type="text" class="form-control" id="studyDbId" value="4832">
+      <input type="text" class="form-control" id="studyDbId" value="165">
   </div>
   <a class="btn btn-default" onclick="fieldMap.setLocation(d3.select('#studyDbId').node().value)">Set location</a>
 </form>
@@ -21,7 +21,8 @@
     <label for="cols">cols</label>
       <input type="text" class="form-control" id="cols" value="4">
   </div>
-  <a class="btn btn-default" onclick="fieldMap.generate()">Generate</a>
-    <a class="btn btn-default" onclick="fieldMap.generate(d3.select('#studyDbId').node().value)">Load from study</a>
+    <a class="btn btn-default" onclick="generate()">Generate</a>
+    <a class="btn btn-default" onclick="generate(d3.select('#studyDbId').node().value)">Load from study</a>
+    <a class="btn btn-default" onclick="update()">Update study</a>
 </form>
 

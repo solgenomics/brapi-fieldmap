@@ -10,17 +10,16 @@ const DEFAULT_OPTS = {
   defaultPos: [42.464292, -76.451431],
   gridSize: 500,
   defaultPlotWidth: 0.002,
-  plotScaleFactor: 0.85,
+  plotScaleFactor: 0.90,
   style: {
     weight: 1
   }
 };
 
 export default class Fieldmap {
-  constructor(map_container, brapi_endpoint, studyDbId, opts) {
+  constructor(map_container, brapi_endpoint, opts) {
     this.map_container = d3.select(map_container).style("background-color", "#888");
     this.brapi_endpoint = brapi_endpoint;
-    this.studyDbId = studyDbId;
 
     // Parse Options
     this.opts = Object.assign(Object.create(DEFAULT_OPTS), opts || {});
@@ -66,14 +65,6 @@ export default class Fieldmap {
         html: '▰'
       }
     });
-    L.NewMarkerControl = L.EditControl.extend({
-      options: {
-        position: 'topleft',
-        callback: self.map.editTools.startMarker,
-        kind: 'marker',
-        html: '🖈'
-      }
-    });
     L.NewRectangleControl = L.EditControl.extend({
       options: {
         position: 'topleft',
@@ -86,25 +77,27 @@ export default class Fieldmap {
       }
     });
 
-    this.map.addControl(new L.NewMarkerControl());
     this.map.addControl(new L.NewPolygonControl());
     this.map.addControl(new L.NewRectangleControl());
 
   }
 
   generate(studyDbId) {
-    if (!this.polygon) return;
-    this.geoJson = this.polygon.toGeoJSON();
-    if (!this.geoJson) return;
+    if (this.polygon) {
+      this.geoJson = this.polygon.toGeoJSON();
+      this.level();
+      let bbox = turf.bbox(this.geoJson);
+      this.opts.defaultPos = [bbox[0], bbox[3]];
+    }
 
-    this.level();
     this.generatePlots(studyDbId);
-
     this.data.then(()=>{
-      // rotate to original position
-      this.plots = turf.transformRotate(this.plots, -this.rotation);
+      if (this.geoJson) {
+        // rotate to original position
+        this.plots = turf.transformRotate(this.plots, -this.rotation);
+        this.polygon.remove();
+      }
       this.drawPlots();
-      this.polygon.remove();
     });
   }
 
@@ -223,12 +216,10 @@ export default class Fieldmap {
     this.plots = turf.voronoi(turf.featureCollection(points), {bbox: turf.bbox(this.geoJson)})
       .features.filter(x=>x).map((plot)=>turf.intersect(plot, this.geoJson));
     this.plots = turf.featureCollection(this.plots);
-    this.data = Promise.resolve({plots: this.plots});
+    this.data = Promise.resolve();
   }
 
   generateFromStudy(studyDbId) {
-    let bbox = turf.bbox(this.geoJson);
-    this.opts.defaultPos = [bbox[0], bbox[3]];
     this.load_ObsUnits(studyDbId)
       .then((data)=>{
         this.plots = turf.featureCollection(data.plots.map(p=>p._geoJSON));
@@ -245,9 +236,9 @@ export default class Fieldmap {
     var rej;
     var rawdata = new Promise((resolve,reject)=>{
       rej = reject;
-      const brapi = BrAPI(this.brapi_endpoint, "1.2", null);
+      const brapi = BrAPI(this.brapi_endpoint, "1.3", null);
       var results = {'plots':[]};
-      brapi.phenotypes_search({
+      brapi.search_observationunits({
         "studyDbIds":[studyDbId],
         'pageSize':this.opts.brapi_pageSize
       })
@@ -306,9 +297,11 @@ export default class Fieldmap {
     data.plots.forEach((ou)=>{
       ou._X = ou.X || ou.positionCoordinateX;
       ou._Y = ou.Y || ou.positionCoordinateY;
-      ou._geoJSON = ou.observationUnitGeoJSON
+      try {
+        ou._geoJSON = (ou.observationUnitPosition && JSON.parse(ou.observationUnitPosition[0].geoCoordinates)) || null;
+      } catch (e) {}
       ou._type = ""
-      if (!isNaN(ou._X) && !isNaN(ou._Y)){
+      if (!ou._geoJSON && !isNaN(ou._X) && !isNaN(ou._Y)){
         if(ou.positionCoordinateXType
           && ou.positionCoordinateYType){
           if(ou.positionCoordinateXType=="GRID_ROW" && ou.positionCoordinateYType=="GRID_COL"
@@ -514,7 +507,7 @@ export default class Fieldmap {
   }
 
   setLocation(studyDbId) {
-    this.brapi = BrAPI(this.brapi_endpoint, "1.2", null);
+    this.brapi = BrAPI(this.brapi_endpoint, "2.0", null);
     this.brapi.studies_detail({studyDbId: studyDbId})
       .map((study)=>{
         if (!(study && study.location)) return;
@@ -525,6 +518,23 @@ export default class Fieldmap {
   debug(feature) {
     L.geoJSON(feature).addTo(this.map);
     return feature;
+  }
+
+  update() {
+    this.brapi = BrAPI(this.brapi_endpoint, "2.0", null);
+    this.plots.features.forEach((plot)=>{
+      let params = {
+        observationUnitPosition: [{geoCoordinates: plot}],
+        observationUnitDbId: plot.properties.observationUnitDbId
+      };
+      // XXX Using internal brapijs method for now
+      this.brapi.simple_brapi_call({
+        'defaultMethod': 'put', // TODO patch
+        'urlTemplate': '/observationunits/{observationUnitDbId}',
+        'params': params,
+        'behavior': 'map',
+      })
+    });
   }
 }
 
