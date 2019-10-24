@@ -197,7 +197,9 @@ export default class Fieldmap {
   generatePlots(studyDbId) {
     return this.load_ObsUnits(studyDbId)
       .then((data)=>{
-        this.plots = turf.featureCollection(data.plots.map(p=>p._geoJSON));
+        this.plots = turf.featureCollection(data.plots.map(p=>{
+          return Object.assign(p._geoJSON, {properties: {observationUnitDbId: p.observationUnitDbId}});
+        }));
         this.fitBounds(this.plots);
       });
   }
