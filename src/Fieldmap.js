@@ -106,11 +106,11 @@ export default class Fieldmap {
     if (this.plotsLayer) this.plotsLayer.remove();
     this.plotsLayer = L.featureGroup(this.plots.features.map((plot)=>{
       let ou = this.plot_map[plot.properties.observationUnitDbId];
-      let tooltip = `Germplasm: ${ou.germplasmName}
-       Replicate: ${get_oup(ou).replicate}
-           Block: ${get_oup(ou).blockNumber}
-         Row,Col: ${ou._row},${ou._col}
-          Plot #: ${ou.plotNumber}`;
+      let tooltip = `<dl><dt>Germplasm: ${ou.germplasmName}</dt>
+       <dl><dt>Replicate: ${get_oup(ou).replicate}</dt>
+       <dl><dt>    Block: ${get_oup(ou).blockNumber}</dt>
+       <dl><dt>  Row,Col: ${ou._row},${ou._col}</dt>
+       <dl><dt>   Plot #: ${ou.plotNumber}</dt></dl>`;
       return L.polygon(this.featureToL(turf.transformScale(plot, this.opts.plotScaleFactor)),
         this.opts.style).bindTooltip(tooltip);
     })).on('click', (e)=>{
