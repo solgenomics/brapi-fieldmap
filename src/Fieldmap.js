@@ -13,7 +13,8 @@ const DEFAULT_OPTS = {
   plotScaleFactor: 0.90,
   style: {
     weight: 1
-  }
+  },
+  useGeoJson: true
 };
 
 export default class Fieldmap {
@@ -214,7 +215,7 @@ export default class Fieldmap {
     var rej;
     var rawdata = new Promise((resolve,reject)=>{
       rej = reject;
-      const brapi = BrAPI(this.brapi_endpoint, "1.3", null);
+      const brapi = BrAPI(this.brapi_endpoint, "2.0", null);
       var results = {'plots':[]};
       brapi.search_observationunits({
         "studyDbIds":[studyDbId],
@@ -247,8 +248,8 @@ export default class Fieldmap {
           });
 
           if(results.plots.length>0){
-            results.blocks = d3.nest().key(plot=>plot.blockNumber).entries(results.plots);
-            results.reps = d3.nest().key(plot=>plot.replicate).entries(results.plots);
+            results.blocks = d3.nest().key(plot=>get_oup(plot).blockNumber).entries(results.plots);
+            results.reps = d3.nest().key(plot=>get_oup(plot).replicate).entries(results.plots);
           }
 
           clearInterval(this.while_downloading);
@@ -273,21 +274,23 @@ export default class Fieldmap {
 
     // Determine what information is available for each obsUnit
     data.plots.forEach((ou)=>{
-      ou._X = ou.X || ou.positionCoordinateX;
-      ou._Y = ou.Y || ou.positionCoordinateY;
+      const oup = get_oup(ou);
+      ou._X = ou.X || oup.positionCoordinateX;
+      ou._Y = ou.Y || oup.positionCoordinateY;
       try {
-        ou._geoJSON = (ou.observationUnitPosition && JSON.parse(ou.observationUnitPosition[0].geoCoordinates)) || null;
+        ou._geoJSON = (this.opts.useGeoJson && oup.geoCoordinates)
+                      || null;
       } catch (e) {}
       ou._type = ""
       if (!ou._geoJSON && !isNaN(ou._X) && !isNaN(ou._Y)){
-        if(ou.positionCoordinateXType
-          && ou.positionCoordinateYType){
-          if(ou.positionCoordinateXType=="GRID_ROW" && ou.positionCoordinateYType=="GRID_COL"
-            || ou.positionCoordinateXType=="GRID_COL" && ou.positionCoordinateYType=="GRID_ROW"){
-            ou._row = parseInt(ou._Y) ? ou.positionCoordinateYType=="GRID_ROW" : ou._X;
-            ou._col = parseInt(ou._X) ? ou.positionCoordinateXType=="GRID_COL" : ou._Y;
+        if(oup.positionCoordinateXType
+          && oup.positionCoordinateYType){
+          if(oup.positionCoordinateXType=="GRID_ROW" && oup.positionCoordinateYType=="GRID_COL"
+            || oup.positionCoordinateXType=="GRID_COL" && oup.positionCoordinateYType=="GRID_ROW"){
+            ou._row = oup.positionCoordinateYType=="GRID_ROW" ? parseInt(ou._Y) : parseInt(ou._X);
+            ou._col = oup.positionCoordinateXType=="GRID_COL" ? parseInt(ou._X) : parseInt(ou._Y);
           }
-          if(ou.positionCoordinateXType=="LONGITUDE" && ou.positionCoordinateYType=="LATITUDE"){
+          if(oup.positionCoordinateXType=="LONGITUDE" && oup.positionCoordinateYType=="LATITUDE"){
             if(!ou._geoJSON) ou._geoJSON = turf.point([ou._X,ou._Y]);
           }
         }
@@ -361,6 +364,10 @@ export default class Fieldmap {
     });
 
     if(!plots_shaped){
+      if (!this.geoJson) {
+        alert("Please select the area to layout the plots");
+        return;
+      }
       const bbox = turf.bbox(this.geoJson),
         cols = plot_XY_groups.length,
         rows = plot_XY_groups.reduce((acc, col)=>{
@@ -507,7 +514,7 @@ export default class Fieldmap {
     this.brapi = BrAPI(this.brapi_endpoint, "2.0", null);
     this.plots.features.forEach((plot)=>{
       let params = {
-        observationUnitPosition: [{geoCoordinates: plot}],
+        observationUnitPosition: {geoCoordinates: plot},
         observationUnitDbId: plot.properties.observationUnitDbId
       };
       // XXX Using internal brapijs method for now
@@ -519,6 +526,11 @@ export default class Fieldmap {
       })
     });
   }
+}
+
+// FIXME observationUnitPosition should not be an array
+function get_oup(ou) {
+  return ou.observationUnitPosition && ou.observationUnitPosition.length && ou.observationUnitPosition[0] || {};
 }
 
 applyDefaultPlot(Fieldmap);
