@@ -2,6 +2,8 @@
 
 Tool for editing field spatial layout using [GeoJson] information. 
 
+![example demo](images/preview.gif)
+
 _In progress_
 
 - [ ] Extract common modules with [Brapi-HeatMap]?
