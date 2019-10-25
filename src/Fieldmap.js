@@ -104,13 +104,18 @@ export default class Fieldmap {
 
   drawPlots() {
     if (this.plotsLayer) this.plotsLayer.remove();
-    this.plotsLayer = L.featureGroup(this.plots.features
-      .map((plot)=>L.polygon(this.featureToL(turf.transformScale(plot, this.opts.plotScaleFactor)),
-        this.opts.style)))
-      .on('click', (e)=>{
-        this.enableTransform(e.target)
-      })
-      .addTo(this.map);
+    this.plotsLayer = L.featureGroup(this.plots.features.map((plot)=>{
+      let ou = this.plot_map[plot.properties.observationUnitDbId];
+      let tooltip = `Germplasm: ${ou.germplasmName}
+       Replicate: ${get_oup(ou).replicate}
+           Block: ${get_oup(ou).blockNumber}
+         Row,Col: ${ou._row},${ou._col}
+          Plot #: ${ou.plotNumber}`;
+      return L.polygon(this.featureToL(turf.transformScale(plot, this.opts.plotScaleFactor)),
+        this.opts.style).bindTooltip(tooltip);
+    })).on('click', (e)=>{
+      this.enableTransform(e.target)
+    }).addTo(this.map);
   }
 
   enableTransform(plotGroup) {
@@ -230,10 +235,10 @@ export default class Fieldmap {
         })
         .all(()=>{
           // ensure unique
-          var plot_map = {};
+          this.plot_map = {};
           results.plots = results.plots.reduce((acc,plot)=>{
-            if(!plot_map[plot.observationUnitDbId]){
-              plot_map[plot.observationUnitDbId] = plot;
+            if(!this.plot_map[plot.observationUnitDbId]){
+              this.plot_map[plot.observationUnitDbId] = plot;
               acc.push(plot);
             }
             return acc;
