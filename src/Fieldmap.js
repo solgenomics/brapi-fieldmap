@@ -523,20 +523,26 @@ export default class Fieldmap {
   }
 
   update() {
-    this.brapi = BrAPI(this.brapi_endpoint, "2.0", null);
+    let brapi = BrAPI(this.brapi_endpoint, "2.0", null);
+    let nodes = [];
     this.plots.features.forEach((plot)=>{
       let params = {
         observationUnitPosition: {geoCoordinates: plot},
         observationUnitDbId: plot.properties.observationUnitDbId
       };
       // XXX Using internal brapijs method for now
-      this.brapi.simple_brapi_call({
+      nodes.push(brapi.simple_brapi_call({
         'defaultMethod': 'put', // TODO patch
         'urlTemplate': '/observationunits/{observationUnitDbId}',
         'params': params,
         'behavior': 'map',
-      })
+      }))
     });
+    if (nodes.length > 0) {
+      brapi.join(...nodes).all(()=> {
+        alert('Plots updated!')
+      });
+    }
   }
 }
 
