@@ -174,28 +174,25 @@ export default class Fieldmap {
   }
 
   /**
-   * Try to make the polygon horizontal before calculating row and col.
-   *
-   * Approximates a line that cuts the polygon in half by taking an average of lines to each point in a grid
-   *
-   * FIXME improve, it doesn't work well with near vertical polygons
+   * Try to make the polygon vertical before calculating row and col,
+   * by rotating it in an angle formed between the center and one of
+   * the far ends.
    */
   level() {
     let cellSide = Math.sqrt(turf.area(this.geoJson))/1000/10/2;
     let grid = turf.pointGrid(turf.bbox(this.geoJson), cellSide, {mask: this.geoJson});
     let center = turf.getCoord(turf.centerOfMass(this.geoJson));
-    let slopes = grid.features
-      .map(f=>{
-        let coord = turf.getCoord(f);
-        let slope = (coord[1]-center[1])/(coord[0]-center[0]);
-        return slope === Infinity ? Number.MAX_VALUE : slope === -Infinity ? Number.MIN_VALUE : slope;
-      })
-      .filter(x=>[NaN].indexOf(x) < 0);
-    let avgSlope = slopes
-      .reduce((prev, curr)=>{
-        return prev+curr;
-      }, 0)/grid.features.length;
-    let bearing = turf.bearing(center, [center[0]+cellSide, center[1]+cellSide*avgSlope]);
+    let distances = grid.features.map(f=>turf.distance(center, turf.getCoord(f))).sort();
+    let q3 = d3.quantile(distances, 0.75);
+    let clusters = turf.clustersKmeans(turf.featureCollection(grid.features.filter((f)=>{
+      return turf.distance(center,turf.getCoord(f)) > q3;
+    })), {numberOfClusters: 2});
+    let centers = [];
+    turf.clusterEach(clusters, 'cluster', (cluster)=>{
+      centers.push(turf.getCoord(turf.center(cluster)));
+    });
+    let line = turf.lineString(centers);
+    let bearing = turf.bearing(center, turf.getCoord(centers[0]));
     this.rotation = 180-bearing;
     this.geoJson = turf.transformRotate(this.geoJson, this.rotation);
   }
