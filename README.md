@@ -7,6 +7,9 @@ Tool for editing field spatial layout using [GeoJson] information.
 _In progress_
 
 - [ ] Extract common modules with [Brapi-HeatMap]?
+- [ ] Edit individual plot
+- [x] Add search location input
+- [ ] Add option to specify plot length/width
 
 ## Requirements
 - [@solgenomics/brapijs](https://github.com/solgenomics/BrAPI.js)

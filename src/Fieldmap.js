@@ -78,6 +78,16 @@ export default class Fieldmap {
       }
     });
 
+    this.map.addControl(new L.Control.Search({
+      url: 'https://nominatim.openstreetmap.org/search?format=json&q={s}',
+      jsonpParam: 'json_callback',
+      propertyName: 'display_name',
+      propertyLoc: ['lat', 'lon'],
+      autoCollapse: true,
+      autoType: false,
+      minLength: 2,
+      marker: false
+    }));
     this.map.addControl(new L.NewPolygonControl());
     this.map.addControl(new L.NewRectangleControl());
 

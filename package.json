@@ -4,6 +4,7 @@
   "description": "Tool for generating Fieldmap.",
   "main": "index.js",
   "dependencies": {
+    "leaflet-search": "^2.9.8",
     "npm": "^6.4.0",
     "rollup": "^0.66.2"
   },
@@ -28,7 +29,7 @@
   },
   "scripts": {
     "prepare": "mkdir -p dist && rollup -c",
-    "copy_example_files": "rm -r docs/example_files; mkdir -p docs/example_files && cp dist/* node_modules/@solgenomics/brapijs/build/BrAPI.js node_modules/@turf/turf/turf.js node_modules/d3/dist/d3.js node_modules/leaflet/dist/leaflet.js node_modules/leaflet/dist/leaflet.css node_modules/leaflet.path.drag/src/Path.Drag.js node_modules/leaflet-path-transform/dist/L.Path.Transform.js docs/example_files",
+    "copy_example_files": "rm -r docs/example_files; mkdir -p docs/example_files && cp dist/* node_modules/@solgenomics/brapijs/build/BrAPI.js node_modules/@turf/turf/turf.js node_modules/d3/dist/d3.js node_modules/leaflet/dist/leaflet.js node_modules/leaflet/dist/leaflet.css node_modules/leaflet-path-transform/dist/L.Path.Transform.js node_modules/leaflet-search/dist/leaflet-search.src.js node_modules/leaflet-search/dist/leaflet-search.min.css docs/example_files && mkdir -p docs/images && cp node_modules/leaflet-search/images/loader.gif node_modules/leaflet-search/images/search-icon.png docs/images",
     "prepublishOnly": "npm run copy_example_files && wrapbrapp",
     "build_example": "npm run prepare && npm run copy_example_files && npm run prepublishOnly",
     "watch": "rollup -c -w -m inline"
