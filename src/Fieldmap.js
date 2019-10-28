@@ -386,9 +386,9 @@ export default class Fieldmap {
         if (plot_XY_groups.hasOwnProperty(X)) {
           for (let Y in plot_XY_groups[X]) {
             if (plot_XY_groups[X].hasOwnProperty(Y)) {
-              X = parseInt(X)
-              Y = parseInt(Y)
-              let polygon = this.defaultPlot(Y, X, plotWidth, plotLength);
+              X = parseInt(X);
+              Y = parseInt(Y);
+              let polygon = this.defaultPlot(Y-1, X-1, plotWidth, plotLength);
               // if for some reason plots have the same x/y, split that x/y region
               plot_XY_groups[X][Y].forEach((plot, i)=>{
                 plot._geoJSON = this.splitPlot(polygon, plot_XY_groups[X][Y].length, i);
