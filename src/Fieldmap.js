@@ -26,6 +26,10 @@ export default class Fieldmap {
     this.opts = Object.assign(Object.create(DEFAULT_OPTS), opts || {});
     this.map = L.map(this.map_container.node(), {editable: true}).setView(this.opts.defaultPos, 16);
     this.map.scrollWheelZoom.disable();
+    this.map.on('preclick', ()=>{
+      if (this.editablePolygon) this.finishTranslate();
+      if (this.editablePlot) this.finishPlotEdition();
+    });
 
     this.tilelayer = L.tileLayer.fallback('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false', {
       attribution: '&copy; <a href="http://www.esri.com/">Esri</a>, DigitalGlobe, GeoEye, i-cubed, USDA FSA, USGS, AEX, Getmapping, Aerogrid, IGN, IGP, swisstopo, and the GIS User Community',
@@ -121,11 +125,31 @@ export default class Fieldmap {
        <dl><dt>    Block: ${get_oup(ou).blockNumber}</dt>
        <dl><dt>  Row,Col: ${ou._row},${ou._col}</dt>
        <dl><dt>   Plot #: ${ou.plotNumber}</dt></dl>`;
-      return L.polygon(this.featureToL(turf.transformScale(plot, this.opts.plotScaleFactor)),
+      return L.geoJSON(turf.transformScale(plot, this.opts.plotScaleFactor),
         this.opts.style).bindTooltip(tooltip);
-    })).on('click', (e)=>{
+    })).on('contextmenu', (e)=>{
+      this.enableEdition(e.sourceTarget)
+    }).on('click', (e)=>{
       this.enableTransform(e.target)
     }).addTo(this.map);
+  }
+
+  enableEdition(plot) {
+    this.editablePlot = plot;
+    plot.enableEdit();
+  }
+
+  finishPlotEdition() {
+    this.editablePlot.disableEdit();
+    this.plots = turf.featureCollection(this.plots.features.map((plot)=>{
+      if (plot.properties.observationUnitDbId == this.editablePlot.feature.properties.observationUnitDbId) {
+        let geojson = this.editablePlot.toGeoJSON();
+        plot = turf.convex(geojson);
+        plot.properties = geojson.properties;
+      }
+      return plot;
+    }));
+    this.editablePlot = null;
   }
 
   enableTransform(plotGroup) {
@@ -136,9 +160,9 @@ export default class Fieldmap {
         let target = e.target;
         let startPos = turf.center(this.plots);
         let endPos = turf.center(target.toGeoJSON());
-        turf.transformTranslate(this.plots,
+        this.plots = turf.transformTranslate(this.plots,
           turf.distance(startPos, endPos),
-          turf.bearing(startPos, endPos), {mutate: true});
+          turf.bearing(startPos, endPos));
         this.finishTranslate();
       })
       .on('scaleend', (e)=>{
@@ -148,24 +172,23 @@ export default class Fieldmap {
         let startArea = turf.area(this.plots);
         let endArea = turf.area(target.toGeoJSON());
         let factor = Math.sqrt(endArea/startArea);
-        this.plots.features.forEach((plot)=>{
+        this.plots = turf.featureCollection(this.plots.features.map((plot)=>{
           let startCoord = turf.getCoords(startPos);
           let plotCoord = turf.getCoords(turf.center(plot));
           let bearing = turf.bearing(startCoord,plotCoord);
           let distance = turf.distance(startCoord,plotCoord);
           // after resize, bearing to centroid of all plots is the same, but scaled by the resize factor
           let plotEndCoord = turf.getCoords(turf.destination(turf.getCoords(endPos),distance*factor,bearing));
-          turf.transformTranslate(plot,
+          plot = turf.transformTranslate(plot,
             turf.distance(plotCoord, plotEndCoord),
-            turf.bearing(plotCoord, plotEndCoord), {mutate: true});
-          turf.transformScale(plot, factor, {mutate: true})
-        });
-        this.drawPlots();
+            turf.bearing(plotCoord, plotEndCoord));
+          plot = turf.transformScale(plot, factor);
+          return plot
+        }));
         this.finishTranslate();
       })
       .on('rotateend', (e)=>{
-        turf.transformRotate(this.plots, turf.radiansToDegrees(e.rotation), {mutate: true});
-        this.drawPlots();
+        this.plots = turf.transformRotate(this.plots, turf.radiansToDegrees(e.rotation));
         this.finishTranslate();
       })
       .addTo(this.map);
@@ -179,7 +202,8 @@ export default class Fieldmap {
     polygon.dragging.disable();
     this.drawPlots();
     setTimeout(()=>{
-      polygon.remove()
+      this.editablePolygon.remove();
+      this.editablePolygon = null;
     });
   }
 
@@ -201,7 +225,6 @@ export default class Fieldmap {
     turf.clusterEach(clusters, 'cluster', (cluster)=>{
       centers.push(turf.getCoord(turf.center(cluster)));
     });
-    let line = turf.lineString(centers);
     let bearing = turf.bearing(center, turf.getCoord(centers[0]));
     this.rotation = 180-bearing;
     this.geoJson = turf.transformRotate(this.geoJson, this.rotation);

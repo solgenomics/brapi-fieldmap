@@ -7,7 +7,7 @@ Tool for editing field spatial layout using [GeoJson] information.
 _In progress_
 
 - [ ] Extract common modules with [Brapi-HeatMap]?
-- [ ] Edit individual plot
+- [x] Edit individual plots
 - [x] Add search location input
 - [x] Add option to specify plot length/width
 
