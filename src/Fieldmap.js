@@ -377,9 +377,11 @@ export default class Fieldmap {
 
     if(!plots_shaped){
       if (!this.geoJson) {
-        alert("Please select the area to layout the plots");
+        alert("Please select the area that contain the plots");
         return;
       }
+      let plotLength = d3.select('#length').node().value / 1000,
+          plotWidth = d3.select('#width').node().value / 1000;
       const bbox = turf.bbox(this.geoJson),
         cols = plot_XY_groups.length,
         rows = plot_XY_groups.reduce((acc, col)=>{
@@ -388,9 +390,9 @@ export default class Fieldmap {
             acc[i] = acc[i]+1 || 1;
           });
           return acc;
-        }, []).filter(x=>x).length,
-        plotLength = turf.length(turf.lineString([[bbox[0],bbox[1]],[bbox[0],bbox[3]]]))/rows,
-        plotWidth = turf.length(turf.lineString([[bbox[0],bbox[1]],[bbox[2],bbox[1]]]))/cols;
+        }, []).filter(x=>x).length;
+      plotLength = plotLength || turf.length(turf.lineString([[bbox[0], bbox[1]], [bbox[0], bbox[3]]]))/rows;
+      plotWidth = plotWidth || turf.length(turf.lineString([[bbox[0], bbox[1]], [bbox[2], bbox[1]]]))/cols;
       // Use default plot shapes/positions based on X/Y positions
       for (let X in plot_XY_groups) {
         if (plot_XY_groups.hasOwnProperty(X)) {
