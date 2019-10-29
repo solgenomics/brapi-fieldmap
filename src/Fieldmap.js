@@ -95,6 +95,15 @@ export default class Fieldmap {
     this.map.addControl(new L.NewPolygonControl());
     this.map.addControl(new L.NewRectangleControl());
 
+    this.info = this.map_container.append("div")
+      .style("bottom","5px")
+      .style("left","5px")
+      .style("position","absolute")
+      .style("z-index",999)
+      .style("pointer-events","none")
+      .style("background", "white")
+      .style("padding", "5px")
+      .style("border-radius", "5px");
   }
 
   load(studyDbId) {
@@ -119,18 +128,21 @@ export default class Fieldmap {
   drawPlots() {
     if (this.plotsLayer) this.plotsLayer.remove();
     this.plotsLayer = L.featureGroup(this.plots.features.map((plot)=>{
-      let ou = this.plot_map[plot.properties.observationUnitDbId];
-      let tooltip = `<dl><dt>Germplasm: ${ou.germplasmName}</dt>
-       <dl><dt>Replicate: ${get_oup(ou).replicate}</dt>
-       <dl><dt>    Block: ${get_oup(ou).blockNumber}</dt>
-       <dl><dt>  Row,Col: ${ou._row},${ou._col}</dt>
-       <dl><dt>   Plot #: ${ou.plotNumber}</dt></dl>`;
-      return L.geoJSON(turf.transformScale(plot, this.opts.plotScaleFactor),
-        this.opts.style).bindTooltip(tooltip);
+      return L.geoJSON(turf.transformScale(plot, this.opts.plotScaleFactor), this.opts.style);
     })).on('contextmenu', (e)=>{
       this.enableEdition(e.sourceTarget)
     }).on('click', (e)=>{
       this.enableTransform(e.target)
+    }).on('mousemove', (e)=>{
+      let sourceTarget = e.sourceTarget;
+      let ou = this.plot_map[sourceTarget.feature.properties.observationUnitDbId];
+      this.info.html(`<dl><dt>Germplasm: ${ou.germplasmName}</dt>
+       <dl><dt>Replicate: ${get_oup(ou).replicate}</dt>
+       <dl><dt>    Block: ${get_oup(ou).blockNumber}</dt>
+       <dl><dt>  Row,Col: ${ou._row},${ou._col}</dt>
+       <dl><dt>   Plot #: ${ou.plotNumber}</dt></dl>`)
+    }).on('mouseout', ()=>{
+      this.info.html("");
     }).addTo(this.map);
   }
 
