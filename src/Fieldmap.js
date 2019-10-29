@@ -221,13 +221,17 @@ export default class Fieldmap {
     let clusters = turf.clustersKmeans(turf.featureCollection(grid.features.filter((f)=>{
       return turf.distance(center,turf.getCoord(f)) > q3;
     })), {numberOfClusters: 2});
-    let centers = [];
+    let clusterCenters = [];
     turf.clusterEach(clusters, 'cluster', (cluster)=>{
-      centers.push(turf.getCoord(turf.center(cluster)));
+      clusterCenters.push(turf.getCoord(turf.center(cluster)));
     });
-    let bearing = turf.bearing(center, turf.getCoord(centers[0]));
-    this.rotation = 180-bearing;
+    let bearing = turf.bearing(center, this.northernmost(clusterCenters[0], clusterCenters[1]));
+    this.rotation = -bearing;
     this.geoJson = turf.transformRotate(this.geoJson, this.rotation);
+  }
+
+  northernmost() {
+    return [].slice.call(arguments).sort((a,b)=>b[1] - a[1])[0];
   }
 
   generatePlots(studyDbId) {
