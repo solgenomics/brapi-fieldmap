@@ -25,7 +25,6 @@ export default class Fieldmap {
     // Parse Options
     this.opts = Object.assign(Object.create(DEFAULT_OPTS), opts || {});
     this.map = L.map(this.map_container.node(), {editable: true}).setView(this.opts.defaultPos, 16);
-    this.map.scrollWheelZoom.disable();
     this.map.on('preclick', ()=>{
       if (this.editablePolygon) this.finishTranslate();
       if (this.editablePlot) this.finishPlotEdition();
@@ -104,6 +103,7 @@ export default class Fieldmap {
       .style("background", "white")
       .style("border-radius", "5px");
   }
+
 
   load(studyDbId) {
     if (this.polygon) {
