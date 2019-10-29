@@ -102,7 +102,6 @@ export default class Fieldmap {
       .style("z-index",999)
       .style("pointer-events","none")
       .style("background", "white")
-      .style("padding", "5px")
       .style("border-radius", "5px");
   }
 
@@ -136,11 +135,11 @@ export default class Fieldmap {
     }).on('mousemove', (e)=>{
       let sourceTarget = e.sourceTarget;
       let ou = this.plot_map[sourceTarget.feature.properties.observationUnitDbId];
-      this.info.html(`<dl><dt>Germplasm: ${ou.germplasmName}</dt>
-       <dl><dt>Replicate: ${get_oup(ou).replicate}</dt>
-       <dl><dt>    Block: ${get_oup(ou).blockNumber}</dt>
-       <dl><dt>  Row,Col: ${ou._row},${ou._col}</dt>
-       <dl><dt>   Plot #: ${ou.plotNumber}</dt></dl>`)
+      this.info.html(`<div style="padding: 5px"><div>Germplasm: ${ou.germplasmName}</div>
+       <div>Replicate: ${get_oup(ou).replicate}</div>
+       <div>    Block: ${get_oup(ou).blockNumber}</div>
+       <div>  Row,Col: ${ou._row},${ou._col}</div>
+       <div>   Plot #: ${ou.plotNumber}</div></div>`)
     }).on('mouseout', ()=>{
       this.info.html("");
     }).addTo(this.map);
