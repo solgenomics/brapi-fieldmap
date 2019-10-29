@@ -10,7 +10,7 @@ const DEFAULT_OPTS = {
   defaultPos: [42.464292, -76.451431],
   gridSize: 500,
   defaultPlotWidth: 0.002,
-  plotScaleFactor: 0.90,
+  plotScaleFactor: 1,
   style: {
     weight: 1
   },
@@ -154,7 +154,7 @@ export default class Fieldmap {
 
   enableTransform(plotGroup) {
     this.plotsLayer.remove();
-    this.editablePolygon = L.polygon(this.featureToL(turf.convex(plotGroup.toGeoJSON())),
+    this.editablePolygon = L.polygon(Fieldmap.featureToL(turf.convex(plotGroup.toGeoJSON())),
       Object.assign({transform:true,draggable:true}, this.opts.style))
       .on('dragend', (e)=>{
         let target = e.target;
@@ -533,7 +533,7 @@ export default class Fieldmap {
     return this.splitPlot_memo[memo_key][index];
   }
 
-  featureToL(feature) {
+  static featureToL(feature) {
     return turf.getCoords(turf.flip(feature));
   }
 
@@ -547,7 +547,7 @@ export default class Fieldmap {
   }
 
   debug(feature) {
-    L.geoJSON(feature).addTo(this.map);
+    L.geoJSON(feature, {color: 'red'}).addTo(this.map);
     return feature;
   }
 
@@ -575,9 +575,8 @@ export default class Fieldmap {
   }
 }
 
-// FIXME observationUnitPosition should not be an array
 function get_oup(ou) {
-  return ou.observationUnitPosition && ou.observationUnitPosition.length && ou.observationUnitPosition[0] || {};
+  return ou.observationUnitPosition || {};
 }
 
 applyDefaultPlot(Fieldmap);
