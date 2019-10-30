@@ -13,17 +13,17 @@
   </div>
   <a class="btn btn-default" onclick="fieldMap.setLocation(d3.select('#studyDbId').node().value)">Set location</a>
 </form>
-  <div>Select an area over the field to load the plots</div>
-  <div>(Optional) specify plot size (meters)</div>
+  <div>Select an area over the field to load the plots. Plot size will be determined based on this area and the plot layout</div>
+  <div>(Optional) override plot size (meters):</div>
 <form class="form-inline" style="padding:10px;">
-    <div class="form-group">
-      <label for="length">length</label>
-      <input type="text" class="form-control" id="length" value="">
-    </div>
-    <div class="form-group">
-      <label for="width">width</label>
-      <input type="text" class="form-control" id="width" value="">
-    </div>
+  <div class="form-group">
+    <label for="width">width</label>
+    <input type="text" class="form-control" id="width" value="">
+  </div>
+  <div class="form-group">
+    <label for="length">length</label>
+    <input type="text" class="form-control" id="length" value="">
+  </div>
 </form>
 <form class="form-inline" style="padding:10px;">
   <a class="btn btn-default" onclick="load(d3.select('#studyDbId').node().value)">Load plots</a>

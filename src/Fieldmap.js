@@ -4,11 +4,12 @@ import "../lib/leaflet.tilelayer.fallback.js";
 import "../lib/Leaflet.Editable";
 import applyDefaultPlot from './defaultPlot.js';
 
+const NO_POLYGON_ERROR = "Please select the area that contain the plots";
+
 const DEFAULT_OPTS = {
   brapi_auth: null,
   brapi_pageSize: 1000,
   defaultPos: [42.464292, -76.451431],
-  gridSize: 500,
   defaultPlotWidth: 0.002,
   plotScaleFactor: 1,
   style: {
@@ -108,19 +109,24 @@ export default class Fieldmap {
   load(studyDbId) {
     if (this.polygon) {
       this.geoJson = this.polygon.toGeoJSON();
+      if (turf.area(this.geoJson) === 0) {
+        return Promise.reject(NO_POLYGON_ERROR);
+      }
       this.level();
       let bbox = turf.bbox(this.geoJson);
       this.opts.defaultPos = [bbox[0], bbox[3]];
     }
 
     this.generatePlots(studyDbId);
-    this.data.then(()=>{
+    return this.data.then(()=>{
       if (this.geoJson) {
         // rotate to original position
         this.plots = turf.transformRotate(this.plots, -this.rotation);
         this.polygon.remove();
       }
       this.drawPlots();
+    }).catch(resp=>{
+      console.log(resp)
     });
   }
 
@@ -415,11 +421,10 @@ export default class Fieldmap {
 
     if(!plots_shaped){
       if (!this.geoJson) {
-        alert("Please select the area that contain the plots");
-        return;
+        throw NO_POLYGON_ERROR;
       }
-      let plotLength = d3.select('#length').node().value / 1000,
-          plotWidth = d3.select('#width').node().value / 1000;
+      let plotLength = this.opts.plotLength / 1000,
+          plotWidth = this.opts.plotWidth / 1000;
       const bbox = turf.bbox(this.geoJson),
         cols = plot_XY_groups.length,
         rows = plot_XY_groups.reduce((acc, col)=>{
@@ -563,6 +568,9 @@ export default class Fieldmap {
   }
 
   update() {
+    if (!this.plots) {
+      return Promise.reject('There are no plots loaded');
+    }
     let brapi = BrAPI(this.brapi_endpoint, "2.0", null);
     let nodes = [];
     this.plots.features.forEach((plot)=>{
@@ -578,11 +586,15 @@ export default class Fieldmap {
         'behavior': 'map',
       }))
     });
-    if (nodes.length > 0) {
-      brapi.join(...nodes).all(()=> {
-        alert('Plots updated!')
-      });
-    }
+    return new Promise((resolve, reject)=> {
+      if (nodes.length > 0) {
+        brapi.join(...nodes).all(()=> {
+          resolve('Plots updated!')
+        });
+      } else {
+        reject('There are no plots loaded')
+      }
+    })
   }
 }
 

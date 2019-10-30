@@ -8,14 +8,16 @@
 <script type="text/javascript">
   function setupBrAPI() {
     fieldMap.brapi_endpoint = d3.select('#endpoint').node().value;
+    fieldMap.opts.plotLength = d3.select('#length').node().value;
+    fieldMap.opts.plotWidth = d3.select('#width').node().value;
   }
   function load(studyDbId) {
     setupBrAPI();
-    fieldMap.load(studyDbId);
+    fieldMap.load(studyDbId).then(()=>{},(resp)=>alert(resp));
   }
   function update() {
     setupBrAPI();
-    fieldMap.update();
+    fieldMap.update().then((resp)=>alert(resp), (resp)=>alert(resp));
   }
   var fieldMap = new BrAPIFieldmap("#map", d3.select('#endpoint').node().value);
 </script>
