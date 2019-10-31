@@ -16,7 +16,8 @@ Tool for editing field spatial layout using [GeoJson] information.
 
 Specify a BrAPI endpoint and studyDbId to get the plot information. If the study observationUnits have geoJson information, 
 it will draw them in the map. If they don't have it, you need to select an area over the map to draw the plots based on
-other field layout information (e.g X/Y row-col design).  
+other field layout information (e.g X/Y row-col design).
+Left-click over plots to resize, move or rotate the entire layout. Right-click to edit individual plots.  
 
 ## TODO
 
