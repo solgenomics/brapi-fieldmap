@@ -107,23 +107,8 @@ export default class Fieldmap {
 
 
   load(studyDbId) {
-    if (this.polygon) {
-      this.geoJson = this.polygon.toGeoJSON();
-      if (turf.area(this.geoJson) === 0) {
-        return Promise.reject(NO_POLYGON_ERROR);
-      }
-      this.level();
-      let bbox = turf.bbox(this.geoJson);
-      this.opts.defaultPos = [bbox[0], bbox[3]];
-    }
-
     this.generatePlots(studyDbId);
     return this.data.then(()=>{
-      if (this.geoJson) {
-        // rotate to original position
-        this.plots = turf.transformRotate(this.plots, -this.rotation);
-        this.polygon.remove();
-      }
       this.drawPlots();
     }).catch(resp=>{
       console.log(resp)
@@ -257,6 +242,10 @@ export default class Fieldmap {
         this.plots = turf.featureCollection(data.plots.map(p=>{
           return Object.assign(p._geoJSON, {properties: {observationUnitDbId: p.observationUnitDbId}});
         }));
+        if (!data.plots_shaped) {
+          // rotate to original position
+          data.plots = turf.transformRotate(this.plots, -this.rotation);
+        }
         this.fitBounds(this.plots);
       });
   }
@@ -383,10 +372,10 @@ export default class Fieldmap {
     }
 
     // Shape Plots
-    let plots_shaped = false;
+    data.plots_shaped = false;
     if(data.plots.every(plot=>(plot._type=="Polygon"))){
       // Plot shapes already exist!
-      plots_shaped = true;
+      data.plots_shaped = true;
     }
     else if(data.plots.every(plot=>(plot._type=="Point"||plot._type=="Polygon"))){
       // Create plot shapes using centroid Voronoi
@@ -408,7 +397,7 @@ export default class Fieldmap {
       data.plots.forEach((plot,i)=>{
         plot._geoJSON = cells_cropped.features[i];
       })
-      plots_shaped = true;
+      data.plots_shaped = true;
     }
 
     let plot_XY_groups = [];
@@ -419,14 +408,18 @@ export default class Fieldmap {
       plot_XY_groups[plot._col][plot._row].push(plot);
     });
 
-    if(!plots_shaped){
-      if (!this.geoJson) {
+    if(!data.plots_shaped){
+      if (!this.polygon || !turf.area(this.polygon.toGeoJSON())) {
         throw NO_POLYGON_ERROR;
       }
-      let plotLength = this.opts.plotLength / 1000,
-          plotWidth = this.opts.plotWidth / 1000;
-      const bbox = turf.bbox(this.geoJson),
-        cols = plot_XY_groups.length,
+      this.geoJson = this.polygon.toGeoJSON();
+      this.polygon.remove();
+      this.level();
+      const bbox = turf.bbox(this.geoJson);
+      this.opts.defaultPos = [bbox[0], bbox[3]];
+      let plotLength = this.opts.plotLength/1000,
+        plotWidth = this.opts.plotWidth/1000;
+      const cols = plot_XY_groups.length,
         rows = plot_XY_groups.reduce((acc, col)=>{
           col.forEach((row, i)=>{
             if (!row) return;
