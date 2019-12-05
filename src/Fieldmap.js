@@ -379,7 +379,7 @@ export default class Fieldmap {
     data.plots_shaped = false;
     if(data.plots.every(plot=>(plot._type=="Polygon"))){
       // Plot shapes already exist!
-      data.plots_shaped = true;
+      data.plots_shaped = this.opts.useGeoJson;
     }
     else if(data.plots.every(plot=>(plot._type=="Point"||plot._type=="Polygon"))){
       // Create plot shapes using centroid Voronoi
@@ -401,7 +401,7 @@ export default class Fieldmap {
       data.plots.forEach((plot,i)=>{
         plot._geoJSON = cells_cropped.features[i];
       })
-      data.plots_shaped = true;
+      data.plots_shaped = this.opts.useGeoJson;
     }
 
     let plot_XY_groups = [];
