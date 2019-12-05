@@ -248,7 +248,7 @@ export default class Fieldmap {
         }));
         if (!data.plots_shaped) {
           // rotate to original position
-          data.plots = turf.transformRotate(this.plots, -this.rotation);
+          this.plots = turf.transformRotate(this.plots, -this.rotation);
         }
         this.fitBounds(this.plots);
       });
