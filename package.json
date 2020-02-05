@@ -1,6 +1,6 @@
 {
-  "name": "BrAPI-Fieldmap",
-  "version": "1.0.0-alpha.1",
+  "name": "@solgenomics/brapi-fieldmap",
+  "version": "1.0.0-alpha.2",
   "description": "Tool for generating Fieldmap.",
   "main": "index.js",
   "dependencies": {
