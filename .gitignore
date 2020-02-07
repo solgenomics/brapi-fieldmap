@@ -6,3 +6,6 @@ npm-debug.log
 package-lock.json
 docs/example.html
 docs/example_files
+docs/example_files
+docs/images/loader.gif
+docs/images/search-icon.png
