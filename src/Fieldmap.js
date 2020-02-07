@@ -273,7 +273,7 @@ export default class Fieldmap {
         .each(ou=>{
           ou.X = parseFloat(ou.X);
           ou.Y = parseFloat(ou.Y);
-          if(ou.observationLevel=="plot") results.plots.push(ou);
+          if(ou.observationLevel.toUpperCase("PLOT")) results.plots.push(ou);
           this.data_parsed+=1;
           this.data_total = ou.__response.metadata.pagination.totalCount;
         })
