@@ -264,7 +264,7 @@ export default class Fieldmap {
     var rej;
     var rawdata = new Promise((resolve,reject)=>{
       rej = reject;
-      const brapi = BrAPI(this.brapi_endpoint, "2.0", null);
+      const brapi = BrAPI(this.brapi_endpoint, "2.0", this.opts.brapi_auth);
       var results = {'plots':[]};
       brapi.search_observationunits({
         "studyDbIds":[studyDbId],
@@ -551,7 +551,7 @@ export default class Fieldmap {
   }
 
   setLocation(studyDbId) {
-    this.brapi = BrAPI(this.brapi_endpoint, "2.0", null);
+    this.brapi = BrAPI(this.brapi_endpoint, "2.0", this.opts.brapi_auth);
     this.brapi.studies_detail({studyDbId: studyDbId})
       .map((study)=>{
         if (!(study && study.location)) return;
@@ -568,7 +568,7 @@ export default class Fieldmap {
     if (!this.plots) {
       return Promise.reject('There are no plots loaded');
     }
-    let brapi = BrAPI(this.brapi_endpoint, "2.0", null);
+    let brapi = BrAPI(this.brapi_endpoint, "2.0", this.opts.brapi_auth);
     let nodes = [];
     this.plots.features.forEach((plot)=>{
       let params = {
