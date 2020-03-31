@@ -9,7 +9,7 @@
     "d3": "^5.7.0",
     "leaflet": "^1.5.1",
     "leaflet-path-transform": "^1.1.2",
-    "leaflet-search": "^2.9.8",
+    "leaflet-search": "^2.9.8"
   },
   "devDependencies": {
     "@solgenomics/brapp-wrapper": "^1.1.0",
