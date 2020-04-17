@@ -19,5 +19,13 @@
     setupBrAPI();
     fieldMap.update().then((resp)=>alert(resp), (resp)=>alert(resp));
   }
-  var fieldMap = new BrAPIFieldmap("#map", d3.select('#endpoint').node().value);
+
+  let brapi_endpoint = d3.select('#endpoint').node().value;
+  const brapi = BrAPI(brapi_endpoint, "1.3");
+  brapi.studies().all((data)=> {
+    if (!data || !data.length) return;
+    d3.select('#studyDbId').node().value = data[0].studyDbId;
+  });
+
+  var fieldMap = new BrAPIFieldmap("#map", brapi_endpoint);
 </script>
