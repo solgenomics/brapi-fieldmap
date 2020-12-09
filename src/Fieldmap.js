@@ -45,14 +45,14 @@ export default class Fieldmap {
       options: {
         position: 'topleft',
         callback: null,
-        kind: '',
+        title: '',
         html: ''
       },
       onAdd: function (map) {
         var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
           link = L.DomUtil.create('a', '', container);
         link.href = '#';
-        link.title = 'Create a new '+this.options.kind;
+        link.title = this.options.title;
         link.innerHTML = this.options.html;
         L.DomEvent.on(link, 'click', L.DomEvent.stop)
           .on(link, 'click', function () {
@@ -63,28 +63,38 @@ export default class Fieldmap {
     });
 
     let self = this;
-    L.NewPolygonControl = L.EditControl.extend({
-      options: {
-        position: 'topleft',
-        callback: function () {
-          self.polygon = self.map.editTools.startPolygon();
-          return self.polygon;
-        },
-        kind: 'polygon',
-        html: '▰'
-      }
-    });
-    L.NewRectangleControl = L.EditControl.extend({
-      options: {
-        position: 'topleft',
-        callback: function () {
-          self.polygon = self.map.editTools.startRectangle();
-          return self.polygon;
-        },
-        kind: 'rectangle',
-        html: '⬛'
-      }
-    });
+      L.NewPolygonControl = L.EditControl.extend({
+        options: {
+          position: 'topleft',
+          callback: function () {
+            self.polygon = self.map.editTools.startPolygon();
+            return self.polygon;
+          },
+          title: 'Creates a new polygon',
+          html: '▰'
+        }
+      });
+      L.NewRectangleControl = L.EditControl.extend({
+        options: {
+          position: 'topleft',
+          callback: function () {
+            self.polygon = self.map.editTools.startRectangle();
+            return self.polygon;
+          },
+          title: 'Creates a new rectangle',
+          html: '⬛'
+        }
+      });
+      L.NewClearControl = L.EditControl.extend({
+        options: {
+          position: 'topleft',
+          callback: function () {
+            self.map.editTools.featuresLayer.clearLayers();
+          },
+          title: 'Clears all polygons',
+          html: '🚫'
+        }
+      });
 
     this.map.addControl(new L.Control.Search({
       url: 'https://nominatim.openstreetmap.org/search?format=json&q={s}',
@@ -96,8 +106,14 @@ export default class Fieldmap {
       minLength: 2,
       marker: false
     }));
-    this.map.addControl(new L.NewPolygonControl());
-    this.map.addControl(new L.NewRectangleControl());
+
+    this.polygonControl = new L.NewPolygonControl();
+    this.rectangleControl = new L.NewRectangleControl();
+    this.clearPolygonsControl = new L.NewClearControl();
+
+    this.map.addControl(this.polygonControl);
+    this.map.addControl(this.rectangleControl);
+    this.map.addControl(this.clearPolygonsControl);
 
     this.info = this.map_container.append("div")
       .style("bottom","5px")
@@ -109,6 +125,11 @@ export default class Fieldmap {
       .style("border-radius", "5px");
   }
 
+  removeControls() {
+    this.map.removeControl(this.polygonControl);
+    this.map.removeControl(this.rectangleControl);
+    this.map.removeControl(this.clearPolygonsControl);
+  }
 
   load(studyDbId) {
     this.generatePlots(studyDbId);
