@@ -145,6 +145,9 @@ export default class Fieldmap {
     this.plotsLayer = L.featureGroup(this.plots.features.map((plot)=>{
       return L.geoJSON(turf.transformScale(plot, this.opts.plotScaleFactor), this.opts.style);
     })).on('contextmenu', (e)=>{
+      if (this.editablePlot) {
+        this.finishPlotEdition();
+      }
       this.enableEdition(e.sourceTarget)
     }).on('click', (e)=>{
       this.enableTransform(e.target)
