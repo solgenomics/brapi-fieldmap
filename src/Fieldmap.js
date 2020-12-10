@@ -9,7 +9,7 @@ const NO_POLYGON_ERROR = "Please select the area that contain the plots";
 const DEFAULT_OPTS = {
   brapi_auth: null,
   brapi_pageSize: 1000,
-  defaultPos: [42.464292, -76.451431],
+  defaultPos: [0, 0],
   defaultPlotWidth: 0.002,
   plotScaleFactor: 1,
   style: {
@@ -33,7 +33,7 @@ export default class Fieldmap {
 
     // Parse Options
     this.opts = Object.assign(Object.create(DEFAULT_OPTS), opts || {});
-    this.map = L.map(this.map_container.node(), {editable: true}).setView(this.opts.defaultPos, 16);
+    this.map = L.map(this.map_container.node(), {editable: true}).setView(this.opts.defaultPos, 0);
     this.map.on('preclick', ()=>{
       if (this.editablePolygon) this.finishTranslate();
       if (this.editablePlot) this.finishPlotEdition();
