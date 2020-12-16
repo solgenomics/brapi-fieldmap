@@ -10,7 +10,10 @@ const DEFAULT_OPTS = {
   brapi_auth: null,
   brapi_pageSize: 1000,
   defaultPos: [0, 0],
-  defaultPlotWidth: 0.002,
+  defaultZoom: 2,
+  normalZoom: 16,
+  plotWidth: 0,
+  plotLength: 0,
   plotScaleFactor: 1,
   style: {
     weight: 1
@@ -33,7 +36,7 @@ export default class Fieldmap {
 
     // Parse Options
     this.opts = Object.assign(Object.create(DEFAULT_OPTS), opts || {});
-    this.map = L.map(this.map_container.node(), {editable: true}).setView(this.opts.defaultPos, 0);
+    this.map = L.map(this.map_container.node(), {editable: true}).setView(this.opts.defaultPos, 2);
     this.map.on('preclick', ()=>{
       if (this.editablePolygon) this.finishTranslate();
       if (this.editablePlot) this.finishPlotEdition();
@@ -104,7 +107,8 @@ export default class Fieldmap {
       autoCollapse: true,
       autoType: false,
       minLength: 2,
-      marker: false
+      marker: false,
+      zoom: this.opts.normalZoom
     }));
 
     this.polygonControl = new L.NewPolygonControl();
@@ -579,7 +583,7 @@ export default class Fieldmap {
     this.brapi.studies_detail({studyDbId: studyDbId})
       .map((study)=>{
         if (!(study && study.location)) return;
-        this.map.setView([study.location.latitude, study.location.longitude]);
+        this.map.setView([study.location.latitude, study.location.longitude], this.opts.normalZoom);
       })
   }
 
