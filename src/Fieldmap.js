@@ -359,7 +359,7 @@ export default class Fieldmap {
                       || null;
       } catch (e) {}
       ou._type = ""
-      if (!ou._geoJSON && !isNaN(ou._X) && !isNaN(ou._Y)){
+      if (!isNaN(ou._X) && !isNaN(ou._Y)){
         if(oup.positionCoordinateXType
           && oup.positionCoordinateYType){
           if(oup.positionCoordinateXType=="GRID_ROW" && oup.positionCoordinateYType=="GRID_COL"
