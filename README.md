@@ -44,6 +44,14 @@ fieldMap.opts.plotWidth = d3.select('#width').node().value;
 | style | [Leaflet geoJson style](https://leafletjs.com/reference-1.5.1.html#geojson-style)  | | 
 | useGeoJson | if true, BrAPI geoCoordinates (geoJson) will be used to draw the layout, else X,Y coordinates will be used | true |
 
+## Methods
+
+| method | description  |
+| --- | --- |
+| `load(studyDbId)` | Load plots from study. Return promise  |
+| `setLocation(studyDbId)` | Position the map using study location coordinates. Return promise  |
+| `update()` | Send geoCoordindates to server (using `brapi PUT /observationunits`). Return promise  |
+
 ## TODO
 
 - [ ] Extract common modules with [Brapi-HeatMap]?
@@ -52,6 +60,9 @@ fieldMap.opts.plotWidth = d3.select('#width').node().value;
 - [x] Add option to specify plot length/width
 - [ ] Implement [ImageOverlay] to allow a mix of real field images (aerial or drones) with map tiles layer.
 - [ ] Automated tests
+- [ ] Add plots to existing layout
+- [ ] "Buffer" zones / empty space between plots
+- [ ] Bulk plot edition (select multiple plots and rearrange them)
 
 
 ## Authors and acknowledgment
