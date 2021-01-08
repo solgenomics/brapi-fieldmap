@@ -9,8 +9,11 @@ const NO_POLYGON_ERROR = "Please select the area that contain the plots";
 const DEFAULT_OPTS = {
   brapi_auth: null,
   brapi_pageSize: 1000,
-  defaultPos: [42.464292, -76.451431],
-  defaultPlotWidth: 0.002,
+  defaultPos: [0, 0],
+  defaultZoom: 2,
+  normalZoom: 16,
+  plotWidth: 0,
+  plotLength: 0,
   plotScaleFactor: 1,
   style: {
     weight: 1
@@ -33,7 +36,7 @@ export default class Fieldmap {
 
     // Parse Options
     this.opts = Object.assign(Object.create(DEFAULT_OPTS), opts || {});
-    this.map = L.map(this.map_container.node(), {editable: true}).setView(this.opts.defaultPos, 16);
+    this.map = L.map(this.map_container.node(), {editable: true}).setView(this.opts.defaultPos, 2);
     this.map.on('preclick', ()=>{
       if (this.editablePolygon) this.finishTranslate();
       if (this.editablePlot) this.finishPlotEdition();
@@ -45,14 +48,14 @@ export default class Fieldmap {
       options: {
         position: 'topleft',
         callback: null,
-        kind: '',
+        title: '',
         html: ''
       },
       onAdd: function (map) {
         var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
           link = L.DomUtil.create('a', '', container);
         link.href = '#';
-        link.title = 'Create a new '+this.options.kind;
+        link.title = this.options.title;
         link.innerHTML = this.options.html;
         L.DomEvent.on(link, 'click', L.DomEvent.stop)
           .on(link, 'click', function () {
@@ -63,28 +66,38 @@ export default class Fieldmap {
     });
 
     let self = this;
-    L.NewPolygonControl = L.EditControl.extend({
-      options: {
-        position: 'topleft',
-        callback: function () {
-          self.polygon = self.map.editTools.startPolygon();
-          return self.polygon;
-        },
-        kind: 'polygon',
-        html: '▰'
-      }
-    });
-    L.NewRectangleControl = L.EditControl.extend({
-      options: {
-        position: 'topleft',
-        callback: function () {
-          self.polygon = self.map.editTools.startRectangle();
-          return self.polygon;
-        },
-        kind: 'rectangle',
-        html: '⬛'
-      }
-    });
+      L.NewPolygonControl = L.EditControl.extend({
+        options: {
+          position: 'topleft',
+          callback: function () {
+            self.polygon = self.map.editTools.startPolygon();
+            return self.polygon;
+          },
+          title: 'Creates a new polygon',
+          html: '▰'
+        }
+      });
+      L.NewRectangleControl = L.EditControl.extend({
+        options: {
+          position: 'topleft',
+          callback: function () {
+            self.polygon = self.map.editTools.startRectangle();
+            return self.polygon;
+          },
+          title: 'Creates a new rectangle',
+          html: '⬛'
+        }
+      });
+      L.NewClearControl = L.EditControl.extend({
+        options: {
+          position: 'topleft',
+          callback: function () {
+            self.map.editTools.featuresLayer.clearLayers();
+          },
+          title: 'Clears all polygons',
+          html: '🚫'
+        }
+      });
 
     this.map.addControl(new L.Control.Search({
       url: 'https://nominatim.openstreetmap.org/search?format=json&q={s}',
@@ -94,10 +107,17 @@ export default class Fieldmap {
       autoCollapse: true,
       autoType: false,
       minLength: 2,
-      marker: false
+      marker: false,
+      zoom: this.opts.normalZoom
     }));
-    this.map.addControl(new L.NewPolygonControl());
-    this.map.addControl(new L.NewRectangleControl());
+
+    this.polygonControl = new L.NewPolygonControl();
+    this.rectangleControl = new L.NewRectangleControl();
+    this.clearPolygonsControl = new L.NewClearControl();
+
+    this.map.addControl(this.polygonControl);
+    this.map.addControl(this.rectangleControl);
+    this.map.addControl(this.clearPolygonsControl);
 
     this.info = this.map_container.append("div")
       .style("bottom","5px")
@@ -109,6 +129,11 @@ export default class Fieldmap {
       .style("border-radius", "5px");
   }
 
+  removeControls() {
+    this.map.removeControl(this.polygonControl);
+    this.map.removeControl(this.rectangleControl);
+    this.map.removeControl(this.clearPolygonsControl);
+  }
 
   load(studyDbId) {
     this.generatePlots(studyDbId);
@@ -124,6 +149,9 @@ export default class Fieldmap {
     this.plotsLayer = L.featureGroup(this.plots.features.map((plot)=>{
       return L.geoJSON(turf.transformScale(plot, this.opts.plotScaleFactor), this.opts.style);
     })).on('contextmenu', (e)=>{
+      if (this.editablePlot) {
+        this.finishPlotEdition();
+      }
       this.enableEdition(e.sourceTarget)
     }).on('click', (e)=>{
       this.enableTransform(e.target)
@@ -273,7 +301,7 @@ export default class Fieldmap {
         .each(ou=>{
           ou.X = parseFloat(ou.X);
           ou.Y = parseFloat(ou.Y);
-          if(ou.observationLevel.toUpperCase("PLOT")) results.plots.push(ou);
+          if(ou.observationLevel.toUpperCase() === "PLOT") results.plots.push(ou);
           this.data_parsed+=1;
           this.data_total = ou.__response.metadata.pagination.totalCount;
         })
@@ -331,7 +359,7 @@ export default class Fieldmap {
                       || null;
       } catch (e) {}
       ou._type = ""
-      if (!ou._geoJSON && !isNaN(ou._X) && !isNaN(ou._Y)){
+      if (!isNaN(ou._X) && !isNaN(ou._Y)){
         if(oup.positionCoordinateXType
           && oup.positionCoordinateYType){
           if(oup.positionCoordinateXType=="GRID_ROW" && oup.positionCoordinateYType=="GRID_COL"
@@ -551,12 +579,34 @@ export default class Fieldmap {
   }
 
   setLocation(studyDbId) {
-    this.brapi = BrAPI(this.brapi_endpoint, "2.0", this.opts.brapi_auth);
-    this.brapi.studies_detail({studyDbId: studyDbId})
-      .map((study)=>{
-        if (!(study && study.location)) return;
-        this.map.setView([study.location.latitude, study.location.longitude]);
-      })
+    return new Promise((resolve, reject) => {
+      this.brapi = BrAPI(this.brapi_endpoint, "2.0", this.opts.brapi_auth);
+      this.brapi.studies_detail({studyDbId: studyDbId}).map((study) => {
+        if (!study) {
+          reject();
+          return;
+        }
+        if (study.location && study.location.latitude && study.location.longitude) {
+          // XXX some clients use the brapi v1 format
+          this.map.setView([
+            study.location.latitude,
+            study.location.longitude
+          ], this.opts.normalZoom);
+          resolve();
+        } else if (study.locationDbId) {
+          this.brapi.locations_detail({locationDbId: study.locationDbId}).map((location) => {
+            if (!location || !location.coordinates) {
+              reject();
+              return;
+            }
+            this.map.setView(Fieldmap.featureToL(location.coordinates), this.opts.normalZoom);
+            resolve();
+          });
+        } else {
+          reject();
+        }
+      });
+    });
   }
 
   debug(feature) {

@@ -3,13 +3,13 @@
 <form class="form-inline" style="padding:10px;">
   <div class="form-group">
     <label for="endpoint">BrAPI Base URL</label>
-      <input type="text" class="form-control" id="endpoint" value="http://localhost:7080/brapi/v2">
+    <input type="text" class="form-control" id="endpoint" value="https://test-server.brapi.org/brapi/v1/">
   </div>
 </form>
 <form class="form-inline" style="padding:10px;">
   <div class="form-group">
     <label for="studyDbId">StudyDbId</label>
-      <input type="text" class="form-control" id="studyDbId" value="165">
+    <input type="text" class="form-control" id="studyDbId" value="13">
   </div>
   <a class="btn btn-default" onclick="fieldMap.setLocation(d3.select('#studyDbId').node().value)">Set location</a>
 </form>
