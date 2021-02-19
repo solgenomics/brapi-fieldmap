@@ -74,7 +74,7 @@ export default class Fieldmap {
             return self.polygon;
           },
           title: 'Creates a new polygon',
-          html: '▰'
+          html: String.fromCodePoint(0x25B1)
         }
       });
       L.NewRectangleControl = L.EditControl.extend({
@@ -85,7 +85,7 @@ export default class Fieldmap {
             return self.polygon;
           },
           title: 'Creates a new rectangle',
-          html: '⬛'
+          html: String.fromCodePoint(0x25AD)
         }
       });
       L.NewClearControl = L.EditControl.extend({
@@ -95,7 +95,7 @@ export default class Fieldmap {
             self.map.editTools.featuresLayer.clearLayers();
           },
           title: 'Clears all polygons',
-          html: '🚫'
+          html: String.fromCodePoint(0x1F6AB)
         }
       });
 
@@ -138,7 +138,7 @@ export default class Fieldmap {
   load(studyDbId) {
     this.generatePlots(studyDbId);
     return this.data.then(()=>{
-      this.drawPlots();
+      this.drawPlots(); return true;
     }).catch(resp=>{
       console.log(resp)
     });
@@ -158,9 +158,13 @@ export default class Fieldmap {
     }).on('mousemove', (e)=>{
       let sourceTarget = e.sourceTarget;
       let ou = this.plot_map[sourceTarget.feature.properties.observationUnitDbId];
+      get_oup_rel(ou).forEach((levels)=>{ 
+          if(levels.levelName == 'replicate'){ ou.replicate = levels.levelCode;}
+        else if(levels.levelName == 'block'){ ou.blockNumber = levels.levelCode;}
+        else if(levels.levelName == 'plot'){ ou.plotNumber = levels.levelCode;}});
       this.info.html(`<div style="padding: 5px"><div>Germplasm: ${ou.germplasmName}</div>
-       <div>Replicate: ${get_oup(ou).replicate}</div>
-       <div>    Block: ${get_oup(ou).blockNumber}</div>
+       <div>Replicate: ${ou.replicate}</div>
+       <div>    Block: ${ou.blockNumber}</div>
        <div>  Row,Col: ${ou._row},${ou._col}</div>
        <div>   Plot #: ${ou.plotNumber}</div></div>`)
     }).on('mouseout', ()=>{
@@ -260,7 +264,7 @@ export default class Fieldmap {
       clusterCenters.push(turf.getCoord(turf.center(cluster)));
     });
     let bearing = turf.bearing(center, this.northernmost(clusterCenters[0], clusterCenters[1]));
-    this.rotation = -bearing;
+    this.rotation = 90-(Math.round(bearing) == 0 ? 90:bearing);
     this.geoJson = turf.transformRotate(this.geoJson, this.rotation);
   }
 
@@ -296,12 +300,13 @@ export default class Fieldmap {
       var results = {'plots':[]};
       brapi.search_observationunits({
         "studyDbIds":[studyDbId],
-        'pageSize':this.opts.brapi_pageSize
+        'pageSize':this.opts.brapi_pageSize,
+        'observationUnitLevelName' : 'plot'
       })
         .each(ou=>{
           ou.X = parseFloat(ou.X);
           ou.Y = parseFloat(ou.Y);
-          if(ou.observationLevel.toUpperCase() === "PLOT") results.plots.push(ou);
+          if(ou.observationUnitPosition.observationLevel.levelName.toUpperCase() === "PLOT") results.plots.push(ou);
           this.data_parsed+=1;
           this.data_total = ou.__response.metadata.pagination.totalCount;
         })
@@ -432,12 +437,12 @@ export default class Fieldmap {
       data.plots_shaped = this.opts.useGeoJson;
     }
 
-    let plot_XY_groups = [];
+    let plot_XY_groups = {};
     // group by plots with the same X/Y
     data.plots.forEach(plot=>{
-      plot_XY_groups[plot._col] = plot_XY_groups[plot._col] || [];
-      plot_XY_groups[plot._col][plot._row] = plot_XY_groups[plot._col][plot._row] || [];
-      plot_XY_groups[plot._col][plot._row].push(plot);
+      plot_XY_groups[plot._col] = plot_XY_groups[plot._col] || {};
+      plot_XY_groups[plot._col][plot._row] = plot_XY_groups[plot._col][plot._row] || {};
+      plot_XY_groups[plot._col][plot._row]=[plot];
     });
 
     if(!data.plots_shaped){
@@ -451,9 +456,9 @@ export default class Fieldmap {
       this.opts.defaultPos = [bbox[0], bbox[3]];
       let plotLength = this.opts.plotLength/1000,
         plotWidth = this.opts.plotWidth/1000;
-      const cols = plot_XY_groups.length,
-        rows = plot_XY_groups.reduce((acc, col)=>{
-          col.forEach((row, i)=>{
+      const cols = Object.keys(plot_XY_groups).length,
+        rows =  Object.values(plot_XY_groups).reduce((acc, col)=>{
+          Object.keys(col).forEach((row, i)=>{
             if (!row) return;
             acc[i] = acc[i]+1 || 1;
           });
@@ -647,6 +652,10 @@ export default class Fieldmap {
 
 function get_oup(ou) {
   return ou.observationUnitPosition || {};
+}
+
+function get_oup_rel(ou) {
+  return (ou.observationUnitPosition || {}).observationLevelRelationships || {};
 }
 
 applyDefaultPlot(Fieldmap);
